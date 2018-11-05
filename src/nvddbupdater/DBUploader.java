@@ -23,7 +23,7 @@ import org.w3c.dom.Element;
  */
 public class DBUploader {
 	static ZipTagXml ztx = new ZipTagXml();
-	Connection conn = null;
+	
 	/**
 	 * @brief	This method make query that drop table of 'nvd' database and make a new table
 	 * @param	fpath
@@ -32,7 +32,7 @@ public class DBUploader {
 	 * 			The file name should be '<year>_base.xml'
 	 * 			The table name will be created on 'nvd' database is <year>_base
 	 */
-	public void init_and_upload_base(String fpath) throws Exception {
+	public void init_and_upload_base(Connection conn, String fpath) throws Exception {
 		if(fpath.isEmpty()) {
 			System.out.println(" File_base path is empty.");
 		}
@@ -53,11 +53,11 @@ public class DBUploader {
 			}
 			else {
 				try {
-					setForeignKey(this.conn, 0);
-					drop_table(this.conn, parser2+"_base");
-					create_base(this.conn, parser2+"_base");
-					load_xml_to_table(this.conn, parser2+"_base");
-					setForeignKey(this.conn, 1);
+					setForeignKey(conn, 0);
+					drop_table(conn, parser2+"_base");
+					create_base(conn, parser2+"_base");
+					load_xml_to_table(conn, parser2+"_base");
+					setForeignKey(conn, 1);
 					System.out.println(" DROP and CREATE base "+parser2);
 				}
 				catch (Exception e) {
@@ -76,7 +76,7 @@ public class DBUploader {
 	 * 			The file name should be '<year>_refs.xml'
 	 * 			The table name will be created on 'nvd' database is <year>_refs
 	 */
-	public void init_and_upload_refs(String fpath) throws Exception {
+	public void init_and_upload_refs(Connection conn, String fpath) throws Exception {
 		
 		if (fpath.isEmpty()) {
 			System.out.println(" File_refs path is empty.");
@@ -98,9 +98,9 @@ public class DBUploader {
 			}
 			else {
 				try {
-					drop_table(this.conn, parser2+"_refs");	
-					create_refs(this.conn, parser2+"_refs", parser2+"_base");
-					load_xml_to_table(this.conn, parser2+"_refs");
+					drop_table(conn, parser2+"_refs");	
+					create_refs(conn, parser2+"_refs", parser2+"_base");
+					load_xml_to_table(conn, parser2+"_refs");
 					System.out.println(" DROP and CREATE refs "+parser2);
 				}
 				catch (Exception e) {
@@ -122,7 +122,7 @@ public class DBUploader {
 	 * 			The file name should be '<year>_vuln.xml'
 	 * 			The table name will be created on 'nvd' database is <year>_vuln
 	 */
-	public void init_and_upload_vuln(String fpath) throws Exception {
+	public void init_and_upload_vuln(Connection conn, String fpath) throws Exception {
 		if (fpath.isEmpty()) {
 			System.out.println(" File_vuln path is empty.");
 		}
@@ -144,9 +144,9 @@ public class DBUploader {
 			}
 			else {
 				try {
-					drop_table(this.conn, parser2+"_vuln");	
-					create_vuln(this.conn, parser2+"_vuln", parser2+"_base");
-					load_xml_to_table(this.conn, parser2+"_vuln");
+					drop_table(conn, parser2+"_vuln");	
+					create_vuln(conn, parser2+"_vuln", parser2+"_base");
+					load_xml_to_table(conn, parser2+"_vuln");
 					System.out.println(" DROP and CREATE vuln "+parser2);
 				}
 				catch (Exception e) {
@@ -178,7 +178,7 @@ public class DBUploader {
 	 * 			If IsNewYear is true, this method create new table referenced by newyear
 	 * @throws	Exception
 	 */
-	public void upload_base_modified (String fpath, boolean IsNewYear, int newyear) throws Exception {
+	public void upload_base_modified (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
 		System.out.println(" ");
 		if(fpath.isEmpty()) {
 			System.out.println(" File_base_modified path is empty.");
@@ -201,16 +201,16 @@ public class DBUploader {
 					// make node list.
 					
 					if(IsNewYear) {
-						create_base(this.conn, newyear+"_base");
+						create_base(conn, newyear+"_base");
 					}
 					else {
 						///nothing to do
 					}
-					setForeignKey(this.conn, 0);
-					drop_table(this.conn, "modified_base");
-					create_base(this.conn, "modified_base");
-					load_xml_to_table(this.conn, "modified_base");
-					setForeignKey(this.conn, 1);
+					setForeignKey(conn, 0);
+					drop_table(conn, "modified_base");
+					create_base(conn, "modified_base");
+					load_xml_to_table(conn, "modified_base");
+					setForeignKey(conn, 1);
 					NodeList nList = make_nodelist(inputFile);
 					int procrate = 5;
 					for (int temp = 0; temp < nList.getLength(); temp++) {
@@ -333,7 +333,7 @@ public class DBUploader {
 							query1.append(query2.toString());
 							
 							
-							this.conn.createStatement().executeUpdate(query1.toString());
+							conn.createStatement().executeUpdate(query1.toString());
 							
 							
 						}
@@ -376,7 +376,7 @@ public class DBUploader {
 	 * 			If IsNewYear is true, this method create new table referenced by newyear
 	 * @throws	Exception
 	 */
-	public void upload_refs_modified (String fpath, boolean IsNewYear, int newyear) throws Exception {
+	public void upload_refs_modified (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
 		System.out.println(" ");
 		if(fpath.isEmpty()) {
 			System.out.println(" File_refs_modified path is empty.");
@@ -399,14 +399,14 @@ public class DBUploader {
 					// make node list.
 					NodeList nList = make_nodelist(inputFile);
 					if(IsNewYear) {
-						create_refs(this.conn, newyear+"_refs",newyear+"_base");
+						create_refs(conn, newyear+"_refs",newyear+"_base");
 					}
 					else {
 						//nothing to do
 					}
-					drop_table(this.conn, "modified_refs");
-					create_refs(this.conn, "modified_refs", "modified_base");
-					load_xml_to_table(this.conn, "modified_refs");
+					drop_table(conn, "modified_refs");
+					create_refs(conn, "modified_refs", "modified_base");
+					load_xml_to_table(conn, "modified_refs");
 					String prev_name = "";
 					int procrate = 5;
 					for (int temp = 0; temp < nList.getLength(); temp++) {
@@ -434,24 +434,49 @@ public class DBUploader {
 							else {
 								// nothing to do
 							}
+							
 							if (!prev_name.equals(cve_n)) {
+								PreparedStatement queryDelete = null;
 								try {
-									String refsDeleteQuery = "DELETE FROM "+parser1+"_refs WHERE name= '"+cve_n+"';";
-									this.conn.createStatement().executeUpdate(refsDeleteQuery);
+									String refsDeleteQuery = "DELETE FROM ? WHERE name= ?;";
+									String n_table = parser1+"_refs";
+									queryDelete = conn.prepareStatement(refsDeleteQuery);
+									queryDelete.setString(1, n_table);
+									queryDelete.setString(2, cve_n);
+									queryDelete.execute();
+									prev_name = cve_n;
+									
 								} catch (Exception e) {
-									e.printStackTrace();
+									System.out.println(" Cannot delete data from "+parser1+"_refs");
 									throw e;
+								} finally {
+									queryDelete.clearParameters();
+									queryDelete.close();
 								}
-								prev_name = cve_n;
+								
 							}
 							else {
 								// nothing to do
 							}
-							
-							String refsInsertQuery = "INSERT INTO "+parser1+"_refs " +
-									"(name, source, url) " +
-									"VALUES ('"+cve_n+"','"+cve_s+"','"+cve_u+"'); ";
-							conn.createStatement().executeUpdate(refsInsertQuery);
+							PreparedStatement queryInsert = null;
+							try {
+								String refsInsertQuery = "INSERT INTO ? " +
+										"(name, source, url) " +
+										"VALUES (?,?,?); ";
+								String n_table = parser1+"_refs ";
+								queryInsert = conn.prepareStatement(refsInsertQuery);
+								queryInsert.setString(1, n_table);
+								queryInsert.setString(2, cve_n);
+								queryInsert.setString(3, cve_s);
+								queryInsert.setString(4, cve_u);
+								queryInsert.execute();
+							} catch (Exception e) {
+								System.out.println(" Cannot insert data into "+parser1+"_refs");
+								throw e;
+							} finally {
+								queryInsert.clearParameters();
+								queryInsert.close();
+							}
 							
 							
 						}
@@ -493,7 +518,7 @@ public class DBUploader {
 	 * 			If IsNewYear is true, this method create new table referenced by newyear
 	 * @throws	Exception
 	 */
-	public void upload_vuln_modified (String fpath, boolean IsNewYear, int newyear) throws Exception {
+	public void upload_vuln_modified (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
 		System.out.println(" ");
 		if(fpath.isEmpty()) {
 			System.out.println(" File_vuln_modified path is empty.");
@@ -516,14 +541,14 @@ public class DBUploader {
 					// make node list.
 					NodeList nList = make_nodelist(inputFile);
 					if(IsNewYear) {
-						create_vuln(this.conn, newyear+"_vuln", newyear+"_base");
+						create_vuln(conn, newyear+"_vuln", newyear+"_base");
 					}
 					else {
 						//nothing to do
 					}
-					drop_table(this.conn, "modified_vuln");
-					create_vuln(this.conn, "modified_vuln", "modified_base");
-					load_xml_to_table(this.conn, "modified_vuln");
+					drop_table(conn, "modified_vuln");
+					create_vuln(conn, "modified_vuln", "modified_base");
+					load_xml_to_table(conn, "modified_vuln");
 					String prev_name = "";
 					int procrate = 5;
 					for (int temp = 0; temp < nList.getLength(); temp++) {
@@ -557,9 +582,22 @@ public class DBUploader {
 								// nothing to do
 							}
 							if (!prev_name.equals(cve_n)) {
-								String vulnDeleteQuery = "DELETE FROM "+parser1+"_vuln WHERE name= '"+cve_n+"';";
-								conn.createStatement().executeUpdate(vulnDeleteQuery);
-								prev_name = cve_n;
+								PreparedStatement queryDelete = null;
+								try {
+									String vulnDeleteQuery = "DELETE FROM ? WHERE name= ?;";
+									queryDelete = conn.prepareStatement(vulnDeleteQuery);
+									String n_table = parser1+"_vuln";
+									queryDelete.setString(1, n_table);
+									queryDelete.setString(2, cve_n);
+									queryDelete.execute();
+									prev_name = cve_n;
+								} catch (Exception e) {
+									System.out.println(" Cannot delete data from "+parser1+"_refs");
+									throw e;
+								} finally {
+									queryDelete.clearParameters();
+									queryDelete.close();
+								}
 							}
 							else {
 								// nothing to do
@@ -611,27 +649,27 @@ public class DBUploader {
 	 * @brief	make testing table on nvd database
 	 */
 	}
-	public void set_testing_table () throws Exception{
+	public void set_testing_table (Connection conn) throws Exception{
 		
 		try {
-			setForeignKey(this.conn, 0);
-			drop_table(this.conn, "2999_base");
-			create_base(this.conn, "2999_base");
-			drop_table(this.conn, "test_modified_base");
-			create_base(this.conn, "test_modified_base");
-			setForeignKey(this.conn, 1);
+			setForeignKey(conn, 0);
+			drop_table(conn, "2999_base");
+			create_base(conn, "2999_base");
+			drop_table(conn, "test_modified_base");
+			create_base(conn, "test_modified_base");
+			setForeignKey(conn, 1);
 			
-			drop_table(this.conn, "2999_refs");
-			drop_table(this.conn, "2999_vuln");
+			drop_table(conn, "2999_refs");
+			drop_table(conn, "2999_vuln");
 			
-			drop_table(this.conn, "test_modified_refs");
-			drop_table(this.conn, "test_modified_vuln");
+			drop_table(conn, "test_modified_refs");
+			drop_table(conn, "test_modified_vuln");
 			
-			create_refs(this.conn, "2999_refs","2999_base");
-			create_vuln(this.conn, "2999_vuln","2999_base");
+			create_refs(conn, "2999_refs","2999_base");
+			create_vuln(conn, "2999_vuln","2999_base");
 			
-			create_refs(this.conn, "test_modified_refs", "test_modified_base");
-			create_vuln(this.conn, "test_modified_vuln", "test_modified_base");
+			create_refs(conn, "test_modified_refs", "test_modified_base");
+			create_vuln(conn, "test_modified_vuln", "test_modified_base");
 			String baseInsertQuery = "INSERT INTO 2999_base VALUES ('CVE-2999-9999', '2999-9999', 'CVE', '2018-10-29', '2018-10-29', '(AV:N/AC:L/Au:N/C:P/I:P/A:P)', 10, 10, 10, 2, 'High', 'Test Description (MySQL)')";
 			String refsInsertQuery = "INSERT INTO 2999_refs VALUES ('CVE-2999-9999', 'TESTSRC', 'https://tde.sktelecom.com')";
 			String vulnInsertQuery = "INSERT INTO 2999_vuln VALUES ('CVE-2999-9999', 'Testprod', 'Testvendor', 'Testnum', 'Testedition')";
@@ -640,14 +678,14 @@ public class DBUploader {
 			String mRefsInsertQuery2 = "INSERT INTO test_modified_refs VALUES ('CVE-2999-9999', 'MODSRC', 'https://thub.sktelecom.com')";
 			String mVulnInsertQuery = "INSERT INTO test_modified_vuln VALUES ('CVE-2999-9999', 'Testprod', 'Testvendor', 'Testnum', 'Testedition')";
 			String mVulnInsertQuery2 = "INSERT INTO test_modified_vuln VALUES ('CVE-2999-9999', 'Modprod', 'Modvendor', 'Modnum', 'Modedition')";
-			this.conn.createStatement().executeUpdate(baseInsertQuery);
-			this.conn.createStatement().executeUpdate(refsInsertQuery);
-			this.conn.createStatement().executeUpdate(vulnInsertQuery);
-			this.conn.createStatement().executeUpdate(mBaseInsertQuery);
-			this.conn.createStatement().executeUpdate(mRefsInsertQuery);
-			this.conn.createStatement().executeUpdate(mRefsInsertQuery2);
-			this.conn.createStatement().executeUpdate(mVulnInsertQuery);
-			this.conn.createStatement().executeUpdate(mVulnInsertQuery2);
+			conn.createStatement().executeUpdate(baseInsertQuery);
+			conn.createStatement().executeUpdate(refsInsertQuery);
+			conn.createStatement().executeUpdate(vulnInsertQuery);
+			conn.createStatement().executeUpdate(mBaseInsertQuery);
+			conn.createStatement().executeUpdate(mRefsInsertQuery);
+			conn.createStatement().executeUpdate(mRefsInsertQuery2);
+			conn.createStatement().executeUpdate(mVulnInsertQuery);
+			conn.createStatement().executeUpdate(mVulnInsertQuery2);
 			
 		}
 		catch (Exception e) {
@@ -660,9 +698,9 @@ public class DBUploader {
 	}
 	
 	public void create_base (Connection conn, String n_table) throws Exception{
+		PreparedStatement queryCreate = null;
 		try {
-			conn.createStatement().execute(
-					"CREATE TABLE "+n_table+"(\n" +
+			String createQuery = "CREATE TABLE ?(\n" +
 				    "name char(20) not null unique,\n" +
 				    "seq text,\n" +
 				    "type text,\n" +
@@ -676,39 +714,62 @@ public class DBUploader {
 				    "severity text,\n" +
 				    "`desc` mediumtext\n" +
 				    
-				    ") "
-					);
+				    ") ";
+			queryCreate = conn.prepareStatement(createQuery);
+			queryCreate.setString(1, n_table);
+			queryCreate.execute();
 		} catch (Exception e) {
 			System.out.println(" createBase failed "+n_table);
 			throw e;
 		} finally {
-			///nothing to do
+			queryCreate.clearParameters();
+			queryCreate.close();
 		}
 	}
 	
 	public void create_refs(Connection conn, String n_table, String base_table) throws Exception {
-		String createQuery = "CREATE TABLE "+n_table+"(\n" 
-				+ "name char(20) not null,\n"
-				+ "source text, \n"
-				+ "url text, \n"
-				
-				+ "foreign key(name) references "
-				+ base_table + "(name)\n"
-				+ "	on delete cascade)";
+		
+		PreparedStatement queryCreate = null;
 		try {
-			conn.createStatement().execute(createQuery);
+			String createQuery = "CREATE TABLE ?(\n" 
+					+ "name char(20) not null,\n"
+					+ "source text, \n"
+					+ "url text, \n"
+					
+					+ "foreign key(name) references "
+					+ "?(name)\n"
+					+ "	on delete cascade)";
+			queryCreate = conn.prepareStatement(createQuery);
+			queryCreate.setString(1, n_table);
+			queryCreate.setString(2, base_table);
+			queryCreate.execute();
 		} catch (Exception e) {
 			System.out.println(" createRefs failed "+n_table);
 			throw e;
 		} finally {
-			///nothing to do
+			queryCreate.clearParameters();
+			queryCreate.close();
 		}
 	}
 	
 	public void create_vuln (Connection conn, String n_table, String base_table) throws Exception{
-		String createQuery = "CREATE TABLE " + n_table +"(\n" + "name char(20) not null,\n" + "prodname text, \n"
-				+ "vendor text, \n" + "num text, \n" + "edition text, \n" 
-				+ "foreign key(name) references " + base_table + "(name)\n" + "	on delete cascade)";
+		PreparedStatement queryCreate = null;
+		try {
+			String createQuery = "CREATE TABLE ?(\n" + "name char(20) not null,\n" + "prodname text, \n"
+					+ "vendor text, \n" + "num text, \n" + "edition text, \n" 
+					+ "foreign key(name) references " + "?(name)\n" + "	on delete cascade)";
+			queryCreate = conn.prepareStatement(createQuery);
+			queryCreate.setString(1, n_table);
+			queryCreate.setString(2, base_table);
+			queryCreate.execute();
+		} catch (Exception e) {
+			System.out.println(" createVuln failed "+n_table);
+			throw e;
+		} finally {
+			queryCreate.clearParameters();
+			queryCreate.close();
+		}
+		
 		try {
 			conn.createStatement().execute(createQuery);
 		} catch (Exception e) {
@@ -745,29 +806,34 @@ public class DBUploader {
 		}
 	}
 	
-	public void connect_to_DB() throws Exception{
+	public Connection connect_to_DB(Connection conn) throws Exception{
+		
 		try {
-			if (this.conn == null) {
+			if (conn == null) {
 				Class.forName("com.mysql.cj.jdbc.Driver");
-				this.conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.db_id, ZipTagXml.db_pw);
+				conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.db_id, ZipTagXml.db_pw);
+				
 			} else {
-				if (this.conn.isClosed()) {
+				if (conn.isClosed()) {
 					Class.forName("com.mysql.cj.jdbc.Driver");
-					this.conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.db_id, ZipTagXml.db_pw);
+					conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.db_id, ZipTagXml.db_pw);
+					
 				} else {
 					System.out.println(" Connection already exists");
+					
 				}
 			}
+			return conn;
 		} catch (Exception e) {
 			System.out.println(" connectToDB failed");
-			throw e;
+			return null;
 		} 
 	}
 	
-	public void disconnect_DB() throws Exception {
+	public void disconnect_DB(Connection conn) throws Exception {
 		try {
-			if(!this.conn.isClosed() && this.conn != null) {
-				this.conn.close();
+			if(!conn.isClosed() && conn != null) {
+				conn.close();
 			}
 		} catch (Exception e) {
 			System.out.println(" disconnectDB failed");
