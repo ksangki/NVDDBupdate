@@ -333,7 +333,7 @@ public class DBUploader {
 							query1.append(query2.toString());
 							
 							
-							conn.createStatement().executeUpdate(query1.toString());
+							nvdQuery(conn,query1.toString(),null);
 							
 							
 						}
@@ -442,24 +442,19 @@ public class DBUploader {
 							else {
 								// nothing to do
 							}
-							PreparedStatement queryInsert = null;
+							
+							String refsInsertQuery = "INSERT INTO ? " +
+									"(name, source, url) " +
+									"VALUES (?,?,?); ";
+							String[] input = {parser1+"_refs ",cve_n, cve_s, cve_u};
 							try {
-								String refsInsertQuery = "INSERT INTO ? " +
-										"(name, source, url) " +
-										"VALUES (?,?,?); ";
-								String n_table = parser1+"_refs ";
-								queryInsert = conn.prepareStatement(refsInsertQuery);
-								queryInsert.setString(1, n_table);
-								queryInsert.setString(2, cve_n);
-								queryInsert.setString(3, cve_s);
-								queryInsert.setString(4, cve_u);
-								queryInsert.execute();
+								nvdQuery(conn, refsInsertQuery, input);
 							} catch (Exception e) {
 								System.out.println(" Cannot insert data into "+parser1+"_refs");
 								throw e;
 							} finally {
-								queryInsert.clearParameters();
-								queryInsert.close();
+								///nothing to do
+								
 							}
 							
 							
@@ -594,7 +589,7 @@ public class DBUploader {
 							
 							query.append(query2.toString());
 							
-							conn.createStatement().executeUpdate(query.toString());
+							nvdQuery(conn,query.toString(),null);
 							
 						}
 						if(temp*100/nList.getLength() > procrate) {
@@ -648,14 +643,14 @@ public class DBUploader {
 			String mRefsInsertQuery2 = "INSERT INTO test_modified_refs VALUES ('CVE-2999-9999', 'MODSRC', 'https://thub.sktelecom.com')";
 			String mVulnInsertQuery = "INSERT INTO test_modified_vuln VALUES ('CVE-2999-9999', 'Testprod', 'Testvendor', 'Testnum', 'Testedition')";
 			String mVulnInsertQuery2 = "INSERT INTO test_modified_vuln VALUES ('CVE-2999-9999', 'Modprod', 'Modvendor', 'Modnum', 'Modedition')";
-			conn.createStatement().executeUpdate(baseInsertQuery);
-			conn.createStatement().executeUpdate(refsInsertQuery);
-			conn.createStatement().executeUpdate(vulnInsertQuery);
-			conn.createStatement().executeUpdate(mBaseInsertQuery);
-			conn.createStatement().executeUpdate(mRefsInsertQuery);
-			conn.createStatement().executeUpdate(mRefsInsertQuery2);
-			conn.createStatement().executeUpdate(mVulnInsertQuery);
-			conn.createStatement().executeUpdate(mVulnInsertQuery2);
+			nvdQuery(conn, baseInsertQuery, null);
+			nvdQuery(conn, refsInsertQuery, null);
+			nvdQuery(conn, vulnInsertQuery, null);
+			nvdQuery(conn, mBaseInsertQuery, null);
+			nvdQuery(conn, mRefsInsertQuery, null);
+			nvdQuery(conn, mRefsInsertQuery2, null);
+			nvdQuery(conn, mVulnInsertQuery, null);
+			nvdQuery(conn, mVulnInsertQuery2, null);
 			
 		}
 		catch (Exception e) {
@@ -784,9 +779,9 @@ public class DBUploader {
 	}
 	
 	public void nvdQuery (Connection conn, String query, String input[]) throws Exception {
-		PreparedStatement queryCreate = null;
-		try {
-			queryCreate = conn.prepareStatement(query);
+		
+		try (PreparedStatement queryCreate = conn.prepareStatement(query)){
+			
 			if (input == null) {
 				///nothing to do
 			} else {
@@ -800,8 +795,7 @@ public class DBUploader {
 			System.out.println(" Query Error!");
 			throw e;
 		} finally {
-			queryCreate.clearParameters();
-			queryCreate.close();
+			///nothing to do
 		}
 	}
 }

@@ -27,16 +27,14 @@ public class Logwriter {
 	 * @throws	Exception
 	 */
 	public void write(String fpath, String logstring) throws Exception {
-		PrintWriter fw = null;
-		try {
-			fw = new PrintWriter(new FileWriter(fpath,true));
+		
+		try (PrintWriter fw = new PrintWriter(new FileWriter(fpath,true))){
 			fw.println(logstring);
-			
 		} catch (Exception e) {
 			System.out.println(" logwrite failed");
 			throw e;
 		} finally {
-			fw.close();
+			///nothing to do
 		}
 	}
 }

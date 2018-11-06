@@ -257,41 +257,42 @@ public class ZipTagXml {
 	        byte[] buffer = new byte[1024];
 	        try {
 	            fis = new FileInputStream(zipFilePath);
-            	zis = new ZipInputStream(fis);
-	            ZipEntry ze = zis.getNextEntry();
-	            while(ze != null){
-	                String fileName = ze.getName();
-	                File newFile = new File(destDir + File.separator + fileName);
-	                 //create directories for sub directories in zip
-	                new File(newFile.getParent()).mkdirs();
-	                try {
-		                fos = new FileOutputStream(newFile);
-		                int len;
-		                while ((len = zis.read(buffer)) > 0) {
-		                	fos.write(buffer, 0, len);
+	            try {
+	            	zis = new ZipInputStream(fis);
+		            ZipEntry ze = zis.getNextEntry();
+		            while(ze != null){
+		                String fileName = ze.getName();
+		                File newFile = new File(destDir + File.separator + fileName);
+		                 //create directories for sub directories in zip
+		                new File(newFile.getParent()).mkdirs();
+		                try {
+			                fos = new FileOutputStream(newFile);
+			                int len;
+			                while ((len = zis.read(buffer)) > 0) {
+			                	fos.write(buffer, 0, len);
+			                }
+		                } catch (Exception e) {
+		                	System.out.println(" FileOutputStream error");
+		                } finally {
+		                	fos.close();
 		                }
-	                } catch (Exception e) {
-	                	System.out.println(" FileOutputStream error");
-	                } finally {
-	                	fos.close();
-	                }
-	                
-	                //close this ZipEntry
-	                zis.closeEntry();
-	                ze = zis.getNextEntry();
-	            }
+		                
+		                //close this ZipEntry
+		                zis.closeEntry();
+		                ze = zis.getNextEntry();
+		            } 
+		            zis.closeEntry();
+		            } catch (Exception e) {
+		            	
+		            } finally {
+		            	
+		        		zis.close();
+		            }
 	            //close last ZipEntry
-	            
-	            
 	        } catch (IOException e) {
 	        	System.out.println(" "+zipFilePath + "unzip failed");
-	            
 	        } finally {
-	        	
-	        	zis.closeEntry();
-        		zis.close();
 	        	fis.close();
-	        	
 	        }
 	        
 	    }
