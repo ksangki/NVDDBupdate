@@ -21,6 +21,7 @@ import java.util.Date;
  */
 public class UpdateDBT {
 	Logwriter logwriter = new Logwriter();
+	DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 	/**
 	 * @brief	Get modified data from nvd and upload, update DB tables
 	 * @param	lastyear
@@ -32,7 +33,7 @@ public class UpdateDBT {
 	 * @throws	Exception
 	 */
 	public void update(int lastyear, int newyear, boolean test) throws Exception {
-		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		
 		DBUploader uploaderDB = new DBUploader();
 		
 		
@@ -82,39 +83,44 @@ public class UpdateDBT {
 			
 			try {
 				Date date2 = new Date();
-				if(!test) {
-					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Update complete.");
-					logwriter.writeConsole(" ");
-					logwriter.writeConsole(" "+dateFormat.format(date2) +" Update complete.");
-				} 
-				else {
-					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Test Update complete.");
-					logwriter.writeConsole(" ");
-					logwriter.writeConsole(" "+dateFormat.format(date2) +" Test Update complete.");
-				}
+				writeLog(test, date2, true);
 			} catch (Exception e) {
 				throw e;
 			} 
 		} catch (Exception e){
 			logwriter.writeConsole(" NVD update failed");
-			try {
-				Date date2 = new Date();
-				if(!test) {
+			Date date2 = new Date();
+			writeLog(test, date2, false);
+			throw e;
+		} 
+	}
+	
+	public void writeLog (boolean test, Date date2, boolean success) throws Exception {
+		try {
+			if(!test) {
+				if (success) {
+					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Update complete.");
+					logwriter.writeConsole(" ");
+					logwriter.writeConsole(" "+dateFormat.format(date2) +" Update complete.");
+				} else {
 					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Update failed.");
 					logwriter.writeConsole(" ");
 					logwriter.writeConsole(" "+dateFormat.format(date2) +" Update failed.");
-				} 
-				else {
+				}
+			} 
+			else {
+				if(success) {
+					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Test Update complete.");
+					logwriter.writeConsole(" ");
+					logwriter.writeConsole(" "+dateFormat.format(date2) +" Test Update complete.");
+				} else {
 					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Test Update failed.");
 					logwriter.writeConsole(" ");
 					logwriter.writeConsole(" "+dateFormat.format(date2) +" Test Update failed.");
 				}
-			} catch (Exception e2) {
-				logwriter.writeConsole(" Cannot write log.");
-				throw e2;
-			} 
-			
-			throw e;
-		} 
+			}
+		} catch (Exception e) {
+			logwriter.writeConsole(" Cannot write log.");
+		}
 	}
 }

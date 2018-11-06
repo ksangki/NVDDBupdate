@@ -54,9 +54,9 @@ public class GetData {
 				doc.getDocumentElement().normalize();
 			
 		       	// make translated files
-		       	MakeBase.makeBase(doc, "./"+ZipTagXml.translated + "/" + fname + "_base.xml");
-		       	MakeRefs.makeRefs(doc, "./"+ZipTagXml.translated+"/"+fname + "_refs.xml");
-		       	MakeVuln.makeVuln(doc, "./"+ZipTagXml.translated+"/"+fname+"_vuln.xml");
+		       	MakeDataStructure.makeBase(doc, "./"+ZipTagXml.translated + "/" + fname + "_base.xml");
+		       	MakeDataStructure.makeRefs(doc, "./"+ZipTagXml.translated+"/"+fname + "_refs.xml");
+		       	MakeDataStructure.makeVuln(doc, "./"+ZipTagXml.translated+"/"+fname+"_vuln.xml");
 		       	logwriter.writeConsole(" Success Translating from "+fname+" to "+fname+"_base, "+fname+"_refs, "+fname+"_vuln");
 			}
 			else {

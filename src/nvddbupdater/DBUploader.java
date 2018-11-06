@@ -24,6 +24,12 @@ import org.w3c.dom.Element;
 public class DBUploader {
 	static ZipTagXml ztx = new ZipTagXml();
 	Logwriter logwriter = new Logwriter();
+	String baseType = "_base";
+	String refsType = "_refs";
+	String vulnType = "_vuln";
+	String modifiedBase = "modified_base";
+	String modifiedRefs = "modified_refs";
+	String modifiedVuln = "modified_vuln";
 	/**
 	 * @brief	This method make query that drop table of 'nvd' database and make a new table
 	 * @param	fpath
@@ -85,14 +91,14 @@ public class DBUploader {
 	}
 	
 	public void initNUploadBase(Connection conn, String fpath) throws Exception {
-		String typeTable = "_base";
-		boolean canExecute = createInitLogMessage(fpath, typeTable);
+		
+		boolean canExecute = createInitLogMessage(fpath, baseType);
 		
 		if(canExecute) {
 			String parser2 = "";
 			String parser1 = fpath.split("-")[1];
 			parser2 = parser1.split("_")[0];
-			String nTable = parser2+typeTable;
+			String nTable = parser2+baseType;
 			try {
 				setForeignKey(conn, 0);
 				dropTable(conn, nTable);
@@ -118,15 +124,15 @@ public class DBUploader {
 	 * 			The table name will be created on 'nvd' database is <year>_refs
 	 */
 	public void initNUploadRefs(Connection conn, String fpath) throws Exception {
-		String typeTable = "_refs";
-		boolean canExecute = createInitLogMessage(fpath, typeTable);
+		
+		boolean canExecute = createInitLogMessage(fpath, refsType);
 		
 		if(canExecute) {
 			String parser2 = "";
 			String parser1 = fpath.split("-")[1];
 			parser2 = parser1.split("_")[0];
-			String nTable = parser2 + typeTable;
-			String baseTable = parser2 + "_base";
+			String nTable = parser2 + refsType;
+			String baseTable = parser2 + baseType;
 			try {
 				dropTable(conn, nTable);	
 				createRefs(conn, nTable, baseTable);
@@ -153,7 +159,7 @@ public class DBUploader {
 	 * 			The table name will be created on 'nvd' database is <year>_vuln
 	 */
 	public void initNUploadVuln(Connection conn, String fpath) throws Exception {
-		String typeTable = "_vuln";
+		String typeTable = vulnType;
 		boolean canExecute = createInitLogMessage(fpath, typeTable);
 		
 		if(canExecute) {
@@ -161,7 +167,7 @@ public class DBUploader {
 			String parser1 = fpath.split("-")[1];
 			parser2 = parser1.split("_")[0];
 			String nTable = parser2+typeTable;
-			String baseTable = parser2+"_base";
+			String baseTable = parser2+baseType;
 			try {
 				dropTable(conn, nTable);	
 				createVuln(conn, nTable, baseTable);
@@ -198,7 +204,7 @@ public class DBUploader {
 	 * @throws	Exception
 	 */
 	public void uploadModifiedBase (Connection conn, String fpath, boolean isNewYear, int newyear) throws Exception {
-		String modifiedBase = "modified_base";
+		
 		logwriter.writeConsole(" ");
 		boolean canExecute = createUpdateLogMessage(fpath, modifiedBase);
 		if (canExecute) {
@@ -209,7 +215,7 @@ public class DBUploader {
 				// make node list.
 				
 				if(isNewYear) {
-					String newTable = newyear + "_base";
+					String newTable = newyear + baseType;
 					createBase(conn, newTable);
 				}
 				else {
@@ -387,8 +393,7 @@ public class DBUploader {
 	 * @throws	Exception
 	 */
 	public void uploadModifiedRefs (Connection conn, String fpath, boolean isNewYear, int newyear) throws Exception {
-		String modifiedRefs = "modified_refs";
-		String modifiedBase = "modified_base";
+		
 		logwriter.writeConsole(" ");
 		boolean canExecute = createUpdateLogMessage(fpath, modifiedRefs);
 		
@@ -401,7 +406,7 @@ public class DBUploader {
 				File inputFile = new File(fpath);
 				NodeList nList = makeNodeList(inputFile);
 				if(isNewYear) {
-					createRefs(conn, newyear+"_refs",newyear+"_base");
+					createRefs(conn, newyear+refsType,newyear+baseType);
 				}
 				else {
 					//nothing to do
@@ -438,7 +443,7 @@ public class DBUploader {
 						}
 						
 						if (!prevName.equals(cveName)) {
-							deleteData(conn, parser1+"_refs", cveName);
+							deleteData(conn, parser1+refsType, cveName);
 							prevName = cveName;
 						}
 						else {
@@ -452,7 +457,7 @@ public class DBUploader {
 						try {
 							nvdQuery(conn, refsInsertQuery, input);
 						} catch (Exception e) {
-							logwriter.writeConsole(" Cannot insert data into "+parser1+"_refs");
+							logwriter.writeConsole(" Cannot insert data into "+parser1+refsType);
 							throw e;
 						} finally {
 							///nothing to do
@@ -500,8 +505,7 @@ public class DBUploader {
 	 * @throws	Exception
 	 */
 	public void uploadModifiedVuln (Connection conn, String fpath, boolean isNewYear, int newyear) throws Exception {
-		String modifiedVuln = "modified_vuln";
-		String modifiedBase = "modified_base";
+		
 		logwriter.writeConsole(" ");
 		boolean canExecute = createUpdateLogMessage(fpath, modifiedVuln);
 		if(canExecute) {
@@ -514,7 +518,7 @@ public class DBUploader {
 				File inputFile = new File(fpath);
 				NodeList nList = makeNodeList(inputFile);
 				if(isNewYear) {
-					createVuln(conn, newyear+"_vuln", newyear+"_base");
+					createVuln(conn, newyear+vulnType, newyear+baseType);
 				}
 				else {
 					//nothing to do
@@ -555,7 +559,7 @@ public class DBUploader {
 							// nothing to do
 						}
 						if (!prevName.equals(cveName)) {
-							deleteData(conn, parser1+"_vuln", cveName);
+							deleteData(conn, parser1+vulnType, cveName);
 							prevName = cveName;
 						}
 						else {
