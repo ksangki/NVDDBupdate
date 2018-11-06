@@ -101,17 +101,17 @@ public class DBUploader {
 			parser2 = parser1.split("_")[0];
 			String nTable = parser2+baseType;
 			try {
-				System.out.println("1");
+				
 				setForeignKey(conn, 0);
-				System.out.println("2");
+				
 				dropTable(conn, nTable);
-				System.out.println("3");
+				
 				createBase(conn, nTable);
-				System.out.println("4");
+				
 				loadXmltoTable(conn, nTable);
-				System.out.println("5");
+				
 				setForeignKey(conn, 1);
-				System.out.println("6");
+				
 				logwriter.writeConsole(" DROP and CREATE base "+parser2);
 			}
 			catch (Exception e) {
