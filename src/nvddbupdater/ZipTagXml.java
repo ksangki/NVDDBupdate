@@ -236,8 +236,9 @@ public class ZipTagXml {
 		 * @param	destDir
 		 * 			type: String
 		 * 			The file path of .xml file
+		 * @throws IOException 
 		 */
-		void unzip(String zipFilePath, String destDir) {
+		void unzip(String zipFilePath, String destDir) throws IOException {
 	        File dir = new File(destDir);
 	        // create output directory if it doesn't exist
 	        if(!dir.exists()) {
@@ -256,13 +257,7 @@ public class ZipTagXml {
 	        byte[] buffer = new byte[1024];
 	        try {
 	            fis = new FileInputStream(zipFilePath);
-	            try {
-	            	zis = new ZipInputStream(fis);
-	            } catch (Exception e) {
-	            	System.out.println(" ZipInputStream Error");
-	            } finally {
-	            	///nothing to do
-	            }
+            	zis = new ZipInputStream(fis);
 	            ZipEntry ze = zis.getNextEntry();
 	            while(ze != null){
 	                String fileName = ze.getName();
@@ -292,27 +287,11 @@ public class ZipTagXml {
 	        	System.out.println(" "+zipFilePath + "unzip failed");
 	            
 	        } finally {
-	        	try {
-		        	zis.closeEntry();
-	        	} catch (Exception e) {
-	        		System.out.println(" ZipInputStream closeEntry error");
-	        	} finally {
-	        		///nothing to do
-	        	}
-	        	try {
-	        		zis.close();
-	        	} catch (Exception e) {
-	        		System.out.println(" ZipInputStream close error");
-	        	} finally {
-	        		///nothing to do
-	        	}
-	        	try {
-	        		fis.close();
-	        	} catch (Exception e) {
-	        		System.out.println(" FileInputStream close error");
-	        	} finally {
-	        		///nothing to do
-	        	}
+	        	
+	        	zis.closeEntry();
+        		zis.close();
+	        	fis.close();
+	        	
 	        }
 	        
 	    }

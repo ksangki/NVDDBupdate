@@ -11,6 +11,7 @@ package nvddbupdater;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.io.File;
+import java.sql.Connection;
 import java.util.Date;
 
 /**
@@ -70,12 +71,13 @@ public class Update_DB {
 				throw e;
 			}
 		}
+		Connection conn = null;
 		try {
-			uploader_db.connect_to_DB();
-			uploader_db.upload_base_modified("./" + ZipTagXml.translated + "/nvdcve-modified_base.xml",lastyear != newyear, newyear);
-			uploader_db.upload_refs_modified("./" + ZipTagXml.translated + "/nvdcve-modified_refs.xml",lastyear != newyear, newyear);
-			uploader_db.upload_vuln_modified("./" + ZipTagXml.translated + "/nvdcve-modified_vuln.xml",lastyear != newyear, newyear);
-			uploader_db.disconnect_DB();
+			conn = uploader_db.connect_to_DB(conn);
+			uploader_db.upload_base_modified(conn,"./" + ZipTagXml.translated + "/nvdcve-modified_base.xml",lastyear != newyear, newyear);
+			uploader_db.upload_refs_modified(conn,"./" + ZipTagXml.translated + "/nvdcve-modified_refs.xml",lastyear != newyear, newyear);
+			uploader_db.upload_vuln_modified(conn,"./" + ZipTagXml.translated + "/nvdcve-modified_vuln.xml",lastyear != newyear, newyear);
+			uploader_db.disconnect_DB(conn);
 			
 			try {
 				Date date2 = new Date();

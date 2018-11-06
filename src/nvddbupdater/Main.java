@@ -11,6 +11,7 @@
 package nvddbupdater;
 
 
+import java.sql.Connection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -191,17 +192,18 @@ public class Main {
 			}
 		}
 		System.out.println(" ");
+		Connection conn = null;
 		try {	
-			uploader_db.connect_to_DB();
+			conn = uploader_db.connect_to_DB(conn);
 		
 			for(int i = 2002; i <= thisyear ; i++) {
-				uploader_db.init_and_upload_base("./"+ZipTagXml.translated+"/nvdcve-"+i+"_base.xml");
-				uploader_db.init_and_upload_refs("./"+ZipTagXml.translated+"/nvdcve-"+i+"_refs.xml");
-				uploader_db.init_and_upload_vuln("./"+ZipTagXml.translated+"/nvdcve-"+i+"_vuln.xml");
+				uploader_db.init_and_upload_base(conn,"./"+ZipTagXml.translated+"/nvdcve-"+i+"_base.xml");
+				uploader_db.init_and_upload_refs(conn,"./"+ZipTagXml.translated+"/nvdcve-"+i+"_refs.xml");
+				uploader_db.init_and_upload_vuln(conn,"./"+ZipTagXml.translated+"/nvdcve-"+i+"_vuln.xml");
 				
 			}
-			uploader_db.set_testing_table();
-			uploader_db.disconnect_DB();
+			uploader_db.set_testing_table(conn);
+			uploader_db.disconnect_DB(conn);
 			date = new Date();
 			try {
 				lw.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" All NVD tables are Dropped and created.");

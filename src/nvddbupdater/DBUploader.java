@@ -436,24 +436,8 @@ public class DBUploader {
 							}
 							
 							if (!prev_name.equals(cve_n)) {
-								PreparedStatement queryDelete = null;
-								try {
-									String refsDeleteQuery = "DELETE FROM ? WHERE name= ?;";
-									String n_table = parser1+"_refs";
-									queryDelete = conn.prepareStatement(refsDeleteQuery);
-									queryDelete.setString(1, n_table);
-									queryDelete.setString(2, cve_n);
-									queryDelete.execute();
-									prev_name = cve_n;
-									
-								} catch (Exception e) {
-									System.out.println(" Cannot delete data from "+parser1+"_refs");
-									throw e;
-								} finally {
-									queryDelete.clearParameters();
-									queryDelete.close();
-								}
-								
+								deleteData(conn, parser1+"_refs", cve_n);
+								prev_name = cve_n;
 							}
 							else {
 								// nothing to do
@@ -582,22 +566,8 @@ public class DBUploader {
 								// nothing to do
 							}
 							if (!prev_name.equals(cve_n)) {
-								PreparedStatement queryDelete = null;
-								try {
-									String vulnDeleteQuery = "DELETE FROM ? WHERE name= ?;";
-									queryDelete = conn.prepareStatement(vulnDeleteQuery);
-									String n_table = parser1+"_vuln";
-									queryDelete.setString(1, n_table);
-									queryDelete.setString(2, cve_n);
-									queryDelete.execute();
-									prev_name = cve_n;
-								} catch (Exception e) {
-									System.out.println(" Cannot delete data from "+parser1+"_refs");
-									throw e;
-								} finally {
-									queryDelete.clearParameters();
-									queryDelete.close();
-								}
+								deleteData(conn, parser1+"_vuln", cve_n);
+								prev_name = cve_n;
 							}
 							else {
 								// nothing to do
@@ -698,112 +668,63 @@ public class DBUploader {
 	}
 	
 	public void create_base (Connection conn, String n_table) throws Exception{
-		PreparedStatement queryCreate = null;
-		try {
-			String createQuery = "CREATE TABLE ?(\n" +
-				    "name char(20) not null unique,\n" +
-				    "seq text,\n" +
-				    "type text,\n" +
-				    "published date not null,\n" +
-				    "modified date not null,\n" +
-				    "CVSS_vector text,\n" +
-				    "CVSS_exploit_subscore double,\n" +
-				    "CVSS_impact_subscore double,\n" +
-				    "CVSS_base_score double,\n" +
-				    "CVSS_version double,\n" +
-				    "severity text,\n" +
-				    "`desc` mediumtext\n" +
-				    
-				    ") ";
-			queryCreate = conn.prepareStatement(createQuery);
-			queryCreate.setString(1, n_table);
-			queryCreate.execute();
-		} catch (Exception e) {
-			System.out.println(" createBase failed "+n_table);
-			throw e;
-		} finally {
-			queryCreate.clearParameters();
-			queryCreate.close();
-		}
+		String createQuery = "CREATE TABLE ?(\n" +
+			    "name char(20) not null unique,\n" +
+			    "seq text,\n" +
+			    "type text,\n" +
+			    "published date not null,\n" +
+			    "modified date not null,\n" +
+			    "CVSS_vector text,\n" +
+			    "CVSS_exploit_subscore double,\n" +
+			    "CVSS_impact_subscore double,\n" +
+			    "CVSS_base_score double,\n" +
+			    "CVSS_version double,\n" +
+			    "severity text,\n" +
+			    "`desc` mediumtext\n" +
+			    
+			    ") ";
+		String input[] = {n_table};
+		nvdQuery(conn, createQuery, input);
 	}
 	
 	public void create_refs(Connection conn, String n_table, String base_table) throws Exception {
-		
-		PreparedStatement queryCreate = null;
-		try {
-			String createQuery = "CREATE TABLE ?(\n" 
-					+ "name char(20) not null,\n"
-					+ "source text, \n"
-					+ "url text, \n"
-					
-					+ "foreign key(name) references "
-					+ "?(name)\n"
-					+ "	on delete cascade)";
-			queryCreate = conn.prepareStatement(createQuery);
-			queryCreate.setString(1, n_table);
-			queryCreate.setString(2, base_table);
-			queryCreate.execute();
-		} catch (Exception e) {
-			System.out.println(" createRefs failed "+n_table);
-			throw e;
-		} finally {
-			queryCreate.clearParameters();
-			queryCreate.close();
-		}
+		String createQuery = "CREATE TABLE ?(\n" 
+				+ "name char(20) not null,\n"
+				+ "source text, \n"
+				+ "url text, \n"
+				
+				+ "foreign key(name) references "
+				+ "?(name)\n"
+				+ "	on delete cascade)";
+		String input[] = {n_table, base_table};
+		nvdQuery(conn, createQuery, input);
 	}
 	
 	public void create_vuln (Connection conn, String n_table, String base_table) throws Exception{
-		PreparedStatement queryCreate = null;
-		try {
-			String createQuery = "CREATE TABLE ?(\n" + "name char(20) not null,\n" + "prodname text, \n"
-					+ "vendor text, \n" + "num text, \n" + "edition text, \n" 
-					+ "foreign key(name) references " + "?(name)\n" + "	on delete cascade)";
-			queryCreate = conn.prepareStatement(createQuery);
-			queryCreate.setString(1, n_table);
-			queryCreate.setString(2, base_table);
-			queryCreate.execute();
-		} catch (Exception e) {
-			System.out.println(" createVuln failed "+n_table);
-			throw e;
-		} finally {
-			queryCreate.clearParameters();
-			queryCreate.close();
-		}
-		
-		try {
-			conn.createStatement().execute(createQuery);
-		} catch (Exception e) {
-			System.out.println(" createVuln failed "+n_table);
-			throw e;
-		} finally {
-			///nothing to do
-		}
+		String createQuery = "CREATE TABLE ?(\n" + "name char(20) not null,\n" + "prodname text, \n"
+				+ "vendor text, \n" + "num text, \n" + "edition text, \n" 
+				+ "foreign key(name) references " + "?(name)\n" + "	on delete cascade)";
+		String input[] = {n_table, base_table};
+		nvdQuery(conn, createQuery, input);
 	}
 	
 	public void load_xml_to_table (Connection conn, String n_table) throws Exception{
 		String loadQuery = "LOAD XML LOCAL INFILE './"+ZipTagXml.translated+"/nvdcve-"+n_table+".xml'\n" +
 				"INTO TABLE "+n_table+"\n" +
 				"ROWS IDENTIFIED BY '<entry>';";
-		try {
-			conn.createStatement().execute(loadQuery);
-		} catch (Exception e) {
-			System.out.println(" loadXmlToTable failed "+n_table);
-			throw e;
-		} finally {
-			///nothing to do
-		}
+		nvdQuery(conn, loadQuery, null);
+		
 	} 
 	
 	public void drop_table (Connection conn, String n_table) throws Exception {
 		String dropQuery = "drop table if exists "+n_table;
-		try {
-			conn.createStatement().execute(dropQuery);
-		} catch (Exception e) {
-			System.out.println(" dropTable failed "+n_table);
-			throw e;
-		} finally {
-			///nothing to do
-		}
+		nvdQuery(conn, dropQuery, null);
+	}
+	
+	public void deleteData(Connection conn, String nTable, String nData) throws Exception{
+		String deleteQuery = "DELETE FROM ? WHERE name= ?;";
+		String input[] = {nTable, nData};
+		nvdQuery(conn, deleteQuery, input);
 	}
 	
 	public Connection connect_to_DB(Connection conn) throws Exception{
@@ -858,12 +779,29 @@ public class DBUploader {
 	
 	public void setForeignKey(Connection conn, int key) throws Exception{
 		String setKeyQuery = "set foreign_key_checks = "+key;
+		nvdQuery(conn, setKeyQuery, null);
+
+	}
+	
+	public void nvdQuery (Connection conn, String query, String input[]) throws Exception {
+		PreparedStatement queryCreate = null;
 		try {
-			conn.createStatement().execute(setKeyQuery);
+			queryCreate = conn.prepareStatement(query);
+			if (input == null) {
+				///nothing to do
+			} else {
+				for(int inputIndex = 0; inputIndex < input.length; inputIndex++) {
+					queryCreate.setString(inputIndex, input[inputIndex]);
+				}
+			}
+			
+			queryCreate.execute();
 		} catch (Exception e) {
+			System.out.println(" Query Error!");
 			throw e;
 		} finally {
-			///nothing to do
+			queryCreate.clearParameters();
+			queryCreate.close();
 		}
 	}
 }

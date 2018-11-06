@@ -31,12 +31,12 @@ public class Logwriter {
 		try {
 			fw = new PrintWriter(new FileWriter(fpath,true));
 			fw.println(logstring);
-			fw.close();
+			
 		} catch (Exception e) {
 			System.out.println(" logwrite failed");
 			throw e;
 		} finally {
-			///nothing to do
+			fw.close();
 		}
 	}
 }
