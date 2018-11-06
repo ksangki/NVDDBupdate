@@ -23,18 +23,19 @@ import org.w3c.dom.Document;
  */
 public class GetData {
 	static ZipTagXml ztx = new ZipTagXml();
+	static Logwriter logwriter = new Logwriter();
 	
 	public static void getData(String fpath) throws Exception {
-		System.out.println(" ");
+		logwriter.writeConsole(" ");
 		try (InputStream in = new URL("https://nvd.nist.gov/feeds/xml/cve/1.2/"+fpath).openStream()) {
 			Files.copy(in, Paths.get("./" + ZipTagXml.original + "/"+fpath), StandardCopyOption.REPLACE_EXISTING);
 			in.close();
 			String zipfilepath = "./" + ZipTagXml.original + "/"+fpath;
 			String dest = "./" + ZipTagXml.nvdcve;
 			ztx.unzip(zipfilepath, dest);
-			System.out.println(" Success Getting "+ fpath+" from NVD");
+			logwriter.writeConsole(" Success Getting "+ fpath+" from NVD");
 		} catch (Exception e) {
-			System.out.println(" Get "+ fpath+" from NVD failed");
+			logwriter.writeConsole(" Get "+ fpath+" from NVD failed");
 			throw e;
 		}
 	}
@@ -56,14 +57,14 @@ public class GetData {
 		       	MakeBase.makeBase(doc, "./"+ZipTagXml.translated + "/" + fname + "_base.xml");
 		       	MakeRefs.makeRefs(doc, "./"+ZipTagXml.translated+"/"+fname + "_refs.xml");
 		       	MakeVuln.makeVuln(doc, "./"+ZipTagXml.translated+"/"+fname+"_vuln.xml");
-		       	System.out.println(" Success Translating from "+fname+" to "+fname+"_base, "+fname+"_refs, "+fname+"_vuln");
+		       	logwriter.writeConsole(" Success Translating from "+fname+" to "+fname+"_base, "+fname+"_refs, "+fname+"_vuln");
 			}
 			else {
-				System.out.println(" There is no original file. ("+fname+")");
+				logwriter.writeConsole(" There is no original file. ("+fname+")");
 			}
 		}
 		catch (Exception e){
-			System.out.println(" Translating from "+fname+" to "+fname+"_base, "+fname+"_refs, "+fname+"_vuln failed");
+			logwriter.writeConsole(" Translating from "+fname+" to "+fname+"_base, "+fname+"_refs, "+fname+"_vuln failed");
 			throw e;
 		}
 		

@@ -44,6 +44,7 @@ public class MakeVuln {
 	public static void makeVuln (Document doc, String fpath) throws Exception {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = null;
+		Logwriter logwriter = new Logwriter();
 		try {
 			dBuilder = dbFactory.newDocumentBuilder();
 		} catch (ParserConfigurationException e1) {
@@ -87,7 +88,7 @@ public class MakeVuln {
 			ztx.transforming(document, fpath); 	    
 		}
 		catch (Exception e) {
-			System.out.println(" Make_vuln failed");
+			logwriter.writeConsole(" Make_vuln failed");
 			
 			throw e;
 		}	

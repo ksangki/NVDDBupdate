@@ -44,6 +44,7 @@ public class MakeRefs {
 	public static void makeRefs  (Document doc, String fpath) throws Exception {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = null;
+		Logwriter logwriter = new Logwriter();
 		try {
 			dBuilder = dbFactory.newDocumentBuilder();
 		} catch (ParserConfigurationException e1) {
@@ -79,7 +80,7 @@ public class MakeRefs {
 			ztx.transforming(document, fpath);    
 		}
 		catch (Exception e) {
-			System.out.println(" Make_refs failed");
+			logwriter.writeConsole(" Make_refs failed");
 			
 			throw e;
 		}	

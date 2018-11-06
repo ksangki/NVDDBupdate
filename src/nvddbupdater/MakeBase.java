@@ -43,6 +43,7 @@ public class MakeBase {
 	public static void makeBase (Document doc, String fpath) throws Exception {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = null;
+		Logwriter logwriter = new Logwriter();
 		try {
 			dBuilder = dbFactory.newDocumentBuilder();
 		} catch (ParserConfigurationException e1) {
@@ -71,7 +72,7 @@ public class MakeBase {
 			ztx.transforming(document, fpath); 	    
 		}
 		catch (Exception e) {
-			System.out.println(" Make_base failed");
+			logwriter.writeConsole(" Make_base failed");
 			
 			throw e;
 		}	

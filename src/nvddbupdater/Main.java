@@ -25,7 +25,7 @@ import java.util.Scanner;
  */
 public class Main {
 	static ZipTagXml ztx = new ZipTagXml();
-
+	static Logwriter logwriter = new Logwriter();
 	/**
 	 * @brief	Main process
 	 * @param	args
@@ -48,7 +48,7 @@ public class Main {
 		/// If Option is 2, skip the initialization and run update thread
 		
 			Scanner inputLine = new Scanner(System.in);
-			System.out.println(" ________________________________________________\n" +
+			logwriter.writeConsole(" ________________________________________________\n" +
 					           "| NVD DB Update                                  |\n" +
 					           "| 1. Initialize all tables and update new tables |\n" +
 					           "| 2. Update only modified data                   |\n" +
@@ -60,11 +60,11 @@ public class Main {
 			try {
 				executeOption = Integer.parseInt(msg);
 				if (executeOption == 1) {
-					System.out.println(" Initialize all tables ");
+					logwriter.writeConsole(" Initialize all tables ");
 				}
 				else if (executeOption == 2) {
 					if (!ztx.dirExist()) {
-						System.out.println(" There is no directory. Please intialize all tables first.");
+						logwriter.writeConsole(" There is no directory. Please intialize all tables first.");
 						inputLine.close();
 						System.exit(1);
 					}
@@ -76,12 +76,12 @@ public class Main {
 							// nothing to do
 						}
 						else if (msg.equals("n")||msg.equals("N")) {
-							System.out.println(" Stop ");
+							logwriter.writeConsole(" Stop ");
 							inputLine.close();
 							System.exit(1);
 						}
 						else {
-							System.out.println(" Wrong input: " + msg);
+							logwriter.writeConsole(" Wrong input: " + msg);
 							inputLine.close();
 							System.exit(1);
 						}
@@ -90,7 +90,7 @@ public class Main {
 				}
 				else if(executeOption == 3) {
 					if (!ztx.dirExist()) {
-						System.out.println(" There is no directory. Please intialize all tables first.");
+						logwriter.writeConsole(" There is no directory. Please intialize all tables first.");
 						inputLine.close();
 						System.exit(1);
 					}
@@ -99,12 +99,12 @@ public class Main {
 					}
 				}
 				else {
-					System.out.println(" You choose wrong one: " + executeOption);
+					logwriter.writeConsole(" You choose wrong one: " + executeOption);
 					inputLine.close();
 					System.exit(1);
 				}
 			} catch (Exception e) {
-				System.out.println(" You choose wrong one: " + msg);
+				logwriter.writeConsole(" You choose wrong one: " + msg);
 				inputLine.close();
 				System.exit(1);
 			} finally {
@@ -121,15 +121,15 @@ public class Main {
 				initNSet();
 				runUpdateThread(false);
 			} catch (Exception e) {
-				System.out.println("Initialization failed");
+				logwriter.writeConsole("Initialization failed");
 			} finally {
-				System.out.println(" ...");
+				logwriter.writeConsole(" ...");
 			}
 			/// Update CVEs using modified files
 		}
 		else if(executeOption == 2) {
-			System.out.println(" ");
-			System.out.println(" Start Update only");
+			logwriter.writeConsole(" ");
+			logwriter.writeConsole(" Start Update only");
 			/// Update CVEs using modified files
 			
 			runUpdateThread(false);
@@ -137,16 +137,16 @@ public class Main {
 		}
 		else if(executeOption == 3) {
 			/// Testing
-			System.out.println(" ");
-			System.out.println(" Start Testing");
+			logwriter.writeConsole(" ");
+			logwriter.writeConsole(" Start Testing");
 			
 			runUpdateThread(true);
 			
 			
 		}
 		else {
-			System.out.println(" ");
-			System.out.println(" Error!");
+			logwriter.writeConsole(" ");
+			logwriter.writeConsole(" Error!");
 		}
 		
 	}
@@ -159,20 +159,20 @@ public class Main {
 	private static void initNSet () throws Exception {
 		Date date = new Date();
 		DBUploader uploaderDB = new DBUploader();
-		Logwriter logWriter = new Logwriter();
+		
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		int thisyear = Calendar.getInstance().get(Calendar.YEAR);
 		ztx.makeDir();
 		
 		try {
-			logWriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Start initializing NVD.");
+			logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Start initializing NVD.");
 			
 		} catch (Exception e) {
-			System.out.println(" Cannot write log.");
+			logwriter.writeConsole(" Cannot write log.");
 			throw e;
 		} 
-		System.out.println(" ");
-		System.out.println(" "+dateFormat.format(date) +" Start initializing NVD.");
+		logwriter.writeConsole(" ");
+		logwriter.writeConsole(" "+dateFormat.format(date) +" Start initializing NVD.");
 		
 		for(int i = 2002; i <= thisyear; i++) {
 			try {
@@ -181,17 +181,17 @@ public class Main {
 			} catch (Exception e) {
 				date = new Date();
 				try {
-					logWriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Get_data for initialization failed.");
+					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Get_data for initialization failed.");
 				} catch (Exception e2) {
-					System.out.println(" Cannot write log.");
+					logwriter.writeConsole(" Cannot write log.");
 					throw e2;
 				}
-				System.out.println(" "+dateFormat.format(date) + " Get_Data for initialization failed.");
-				System.out.println(" ");
+				logwriter.writeConsole(" "+dateFormat.format(date) + " Get_Data for initialization failed.");
+				logwriter.writeConsole(" ");
 				throw e;
 			}
 		}
-		System.out.println(" ");
+		logwriter.writeConsole(" ");
 		Connection conn = null;
 		try {	
 			conn = uploaderDB.connectToDB(conn);
@@ -206,26 +206,26 @@ public class Main {
 			uploaderDB.disconnectDB(conn);
 			date = new Date();
 			try {
-				logWriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" All NVD tables are Dropped and created.");
+				logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" All NVD tables are Dropped and created.");
 				
 			} catch (Exception e) {
-				System.out.println(" Cannot write log.");
+				logwriter.writeConsole(" Cannot write log.");
 				throw e;
 			}
 		} catch (Exception e) {
 			date = new Date();
 			try {
-				logWriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Connection to DB for initialization failed.");
+				logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Connection to DB for initialization failed.");
 			} catch (Exception e2) {
-				System.out.println(" Cannot write log.");
+				logwriter.writeConsole(" Cannot write log.");
 				throw e2;
 			}
 			
 			throw e;
 		}
 		
-		System.out.println(" "+dateFormat.format(date) + " All NVD tables are Dropped and created.");
-		System.out.println(" ");
+		logwriter.writeConsole(" "+dateFormat.format(date) + " All NVD tables are Dropped and created.");
+		logwriter.writeConsole(" ");
 
 	}
 
@@ -245,7 +245,7 @@ public class Main {
 	
 			public void run() {
 				Calendar timeIndicator = Calendar.getInstance();
-				Logwriter logWriter = new Logwriter();
+				
 				Date date = null;
 				int lastyear = timeIndicator.get(Calendar.YEAR);
 				int newyear = 0;
@@ -257,13 +257,13 @@ public class Main {
 						newyear = Calendar.getInstance().get(Calendar.YEAR);
 						updaterDB.update(lastyear,newyear,test);						
 					} catch (Exception e) {
-						System.out.println(" Cannot update modified data.");
+						logwriter.writeConsole(" Cannot update modified data.");
 						date = new Date();
 						try {
-							logWriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Update failed. (Update DB failed)");
+							logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Update failed. (Update DB failed)");
 							
 						} catch (Exception e2) {
-							System.out.println(" Cannot write log.");
+							logwriter.writeConsole(" Cannot write log.");
 							Thread.currentThread().interrupt();
 						}
 						
@@ -278,10 +278,10 @@ public class Main {
 						} catch (Exception e) {
 							date = new Date();
 							try {
-								logWriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Thread could not sleep. (Failed to set time)");
+								logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Thread could not sleep. (Failed to set time)");
 								
 							} catch (Exception e2) {
-								System.out.println(" Cannot write log.");
+								logwriter.writeConsole(" Cannot write log.");
 								Thread.currentThread().interrupt();
 							}
 							
@@ -290,25 +290,25 @@ public class Main {
 						date2 = timeIndicator.getTime();
 						Date date3 = new Date();
 						
-						System.out.println(" Updater sleeps.");
+						logwriter.writeConsole(" Updater sleeps.");
 						if (!test) {
-							System.out.println(" Updater will run at "+updateTime24+":00\n");
+							logwriter.writeConsole(" Updater will run at "+updateTime24+":00\n");
 							Thread.sleep(timeInterval-(date3.getTime()-date2.getTime())+updateTime24*anHour); // thread will awake at midnight(04:00)
 						} else {
-							System.out.println(" Updater will run 3 minute later\n");
+							logwriter.writeConsole(" Updater will run 3 minute later\n");
 							Thread.sleep((long) 180000);
 							
 						}
 					} catch (InterruptedException e) {
 						date = new Date();
 						try {
-							logWriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Thread could not sleep. (Failed to call sleep method)");
+							logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Thread could not sleep. (Failed to call sleep method)");
 							
 						} catch (Exception e2) {
-							System.out.println(" Cannot write log.");
+							logwriter.writeConsole(" Cannot write log.");
 							Thread.currentThread().interrupt();
 						}
-						System.out.println(" Quit update thread");
+						logwriter.writeConsole(" Quit update thread");
 						Thread.currentThread().interrupt();
 					}
 				

@@ -20,6 +20,7 @@ import java.util.Date;
  * @warning	Check ZipTagXml.java and referenced libraries
  */
 public class UpdateDBT {
+	Logwriter logwriter = new Logwriter();
 	/**
 	 * @brief	Get modified data from nvd and upload, update DB tables
 	 * @param	lastyear
@@ -34,32 +35,32 @@ public class UpdateDBT {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		DBUploader uploaderDB = new DBUploader();
 		
-		Logwriter logwriter = new Logwriter();
-		System.out.println(" ");
+		
+		logwriter.writeConsole(" ");
 		try {
 			File dirLog = new File("./"+ZipTagXml.log);
 			if(!dirLog.exists()) {
 				dirLog.mkdir();
-				System.out.println(" Log directory is created");
+				logwriter.writeConsole(" Log directory is created");
 			} 
 			else {
 				// nothing to do 
 			}
 		} catch (Exception e) {
-			System.out.println(" Cannot find or create Log directory");
+			logwriter.writeConsole(" Cannot find or create Log directory");
 			throw e;
 		}
 		
 		Date date = new Date();
-		System.out.println(" "+dateFormat.format(date) + " DB updater starts.");
+		logwriter.writeConsole(" "+dateFormat.format(date) + " DB updater starts.");
 		try {
 			if (!test) {
-				logwriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" DB updater starts.");
+				logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" DB updater starts.");
 			} else {
-				logwriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" DB updater starts for test.");
+				logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" DB updater starts for test.");
 			}
 		} catch (Exception e) {
-			System.out.println(" Cannot write log.");
+			logwriter.writeConsole(" Cannot write log.");
 			throw e;
 		}
 		if (!test) {
@@ -67,7 +68,7 @@ public class UpdateDBT {
 				GetData.getData("nvdcve-modified.xml.zip");
 				GetData.makeTranslatedFile("nvdcve-modified");
 			} catch (Exception e) {
-				System.out.println(" Get modified data failed");
+				logwriter.writeConsole(" Get modified data failed");
 				throw e;
 			}
 		}
@@ -82,34 +83,34 @@ public class UpdateDBT {
 			try {
 				Date date2 = new Date();
 				if(!test) {
-					logwriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Update complete.");
-					System.out.println(" ");
-					System.out.println(" "+dateFormat.format(date2) +" Update complete.");
+					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Update complete.");
+					logwriter.writeConsole(" ");
+					logwriter.writeConsole(" "+dateFormat.format(date2) +" Update complete.");
 				} 
 				else {
-					logwriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Test Update complete.");
-					System.out.println(" ");
-					System.out.println(" "+dateFormat.format(date2) +" Test Update complete.");
+					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Test Update complete.");
+					logwriter.writeConsole(" ");
+					logwriter.writeConsole(" "+dateFormat.format(date2) +" Test Update complete.");
 				}
 			} catch (Exception e) {
 				throw e;
 			} 
 		} catch (Exception e){
-			System.out.println(" NVD update failed");
+			logwriter.writeConsole(" NVD update failed");
 			try {
 				Date date2 = new Date();
 				if(!test) {
-					logwriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Update failed.");
-					System.out.println(" ");
-					System.out.println(" "+dateFormat.format(date2) +" Update failed.");
+					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Update failed.");
+					logwriter.writeConsole(" ");
+					logwriter.writeConsole(" "+dateFormat.format(date2) +" Update failed.");
 				} 
 				else {
-					logwriter.write("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Test Update failed.");
-					System.out.println(" ");
-					System.out.println(" "+dateFormat.format(date2) +" Test Update failed.");
+					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date2) +" Test Update failed.");
+					logwriter.writeConsole(" ");
+					logwriter.writeConsole(" "+dateFormat.format(date2) +" Test Update failed.");
 				}
 			} catch (Exception e2) {
-				System.out.println(" Cannot write log.");
+				logwriter.writeConsole(" Cannot write log.");
 				throw e2;
 			} 
 			

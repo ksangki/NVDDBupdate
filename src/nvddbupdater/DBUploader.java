@@ -23,7 +23,7 @@ import org.w3c.dom.Element;
  */
 public class DBUploader {
 	static ZipTagXml ztx = new ZipTagXml();
-	
+	Logwriter logwriter = new Logwriter();
 	/**
 	 * @brief	This method make query that drop table of 'nvd' database and make a new table
 	 * @param	fpath
@@ -34,7 +34,7 @@ public class DBUploader {
 	 */
 	public void initNUploadBase(Connection conn, String fpath) throws Exception {
 		if(fpath.isEmpty()) {
-			System.out.println(" File_base path is empty.");
+			logwriter.writeConsole(" File_base path is empty.");
 		}
 		else {
 			File fpth = new File(fpath);
@@ -42,14 +42,14 @@ public class DBUploader {
 			String parser1 = fpath.split("-")[1];
 			parser2 = parser1.split("_")[0];
 			if (!fpth.exists()) {
-				System.out.println(" "+fpath + " does not exist.");
-				System.out.println(" If there is " + parser2 + "_base table already, use it.");
-				System.out.println(" If not, " + parser2 + "_base table is not created.");
+				logwriter.writeConsole(" "+fpath + " does not exist.");
+				logwriter.writeConsole(" If there is " + parser2 + "_base table already, use it.");
+				logwriter.writeConsole(" If not, " + parser2 + "_base table is not created.");
 			}
 			else if (!fpth.isFile()) {
-				System.out.println(" "+fpath + " is not a file.");
-				System.out.println(" If there is " + parser2 + "_base table already, use it.");
-				System.out.println(" If not, " + parser2 + "_base table is not created.");
+				logwriter.writeConsole(" "+fpath + " is not a file.");
+				logwriter.writeConsole(" If there is " + parser2 + "_base table already, use it.");
+				logwriter.writeConsole(" If not, " + parser2 + "_base table is not created.");
 			}
 			else {
 				try {
@@ -58,10 +58,10 @@ public class DBUploader {
 					createBase(conn, parser2+"_base");
 					loadXmltoTable(conn, parser2+"_base");
 					setForeignKey(conn, 1);
-					System.out.println(" DROP and CREATE base "+parser2);
+					logwriter.writeConsole(" DROP and CREATE base "+parser2);
 				}
 				catch (Exception e) {
-					System.out.println(" DROP and CREATE base failed "+parser2);
+					logwriter.writeConsole(" DROP and CREATE base failed "+parser2);
 					throw e;
 				}
 			}
@@ -79,7 +79,7 @@ public class DBUploader {
 	public void initNUploadRefs(Connection conn, String fpath) throws Exception {
 		
 		if (fpath.isEmpty()) {
-			System.out.println(" File_refs path is empty.");
+			logwriter.writeConsole(" File_refs path is empty.");
 		}
 		else {
 			File fpth = new File(fpath);
@@ -87,24 +87,24 @@ public class DBUploader {
 			String parser1 = fpath.split("-")[1];
 			parser2 = parser1.split("_")[0];
 			if (!fpth.exists()) {
-				System.out.println(" "+fpath + " does not exist.");
-				System.out.println(" If there is " + parser2 + "_refs table already, use it.");
-				System.out.println(" If not, " + parser2 + "_refs table is not created.");
+				logwriter.writeConsole(" "+fpath + " does not exist.");
+				logwriter.writeConsole(" If there is " + parser2 + "_refs table already, use it.");
+				logwriter.writeConsole(" If not, " + parser2 + "_refs table is not created.");
 			}
 			else if (!fpth.isFile()) {
-				System.out.println(" "+fpath + " is not a file.");
-				System.out.println(" If there is " + parser2 + "_refs table already, use it.");
-				System.out.println(" If not, " + parser2 + "_refs table is not created.");
+				logwriter.writeConsole(" "+fpath + " is not a file.");
+				logwriter.writeConsole(" If there is " + parser2 + "_refs table already, use it.");
+				logwriter.writeConsole(" If not, " + parser2 + "_refs table is not created.");
 			}
 			else {
 				try {
 					dropTable(conn, parser2+"_refs");	
 					createRefs(conn, parser2+"_refs", parser2+"_base");
 					loadXmltoTable(conn, parser2+"_refs");
-					System.out.println(" DROP and CREATE refs "+parser2);
+					logwriter.writeConsole(" DROP and CREATE refs "+parser2);
 				}
 				catch (Exception e) {
-					System.out.println(" DROP and CREATE refs failed "+parser2);
+					logwriter.writeConsole(" DROP and CREATE refs failed "+parser2);
 					throw e;
 				} 
 			}
@@ -124,7 +124,7 @@ public class DBUploader {
 	 */
 	public void initNUploadVuln(Connection conn, String fpath) throws Exception {
 		if (fpath.isEmpty()) {
-			System.out.println(" File_vuln path is empty.");
+			logwriter.writeConsole(" File_vuln path is empty.");
 		}
 		else {
 			File fpth = new File(fpath);
@@ -133,24 +133,24 @@ public class DBUploader {
 			parser2 = parser1.split("_")[0];
 			
 			if (!fpth.exists()) {
-				System.out.println(" "+fpath + " does not exist.");
-				System.out.println(" If there is " + parser2 + "_vuln table already, use it.");
-				System.out.println(" If not, " + parser2 + "_vuln table is not created.");
+				logwriter.writeConsole(" "+fpath + " does not exist.");
+				logwriter.writeConsole(" If there is " + parser2 + "_vuln table already, use it.");
+				logwriter.writeConsole(" If not, " + parser2 + "_vuln table is not created.");
 			}
 			else if (!fpth.isFile()) {
-				System.out.println(" "+fpath + " is not a file.");
-				System.out.println(" If there is " + parser2 + "_vuln table already, use it.");
-				System.out.println(" If not, " + parser2 + "_vuln table is not created.");
+				logwriter.writeConsole(" "+fpath + " is not a file.");
+				logwriter.writeConsole(" If there is " + parser2 + "_vuln table already, use it.");
+				logwriter.writeConsole(" If not, " + parser2 + "_vuln table is not created.");
 			}
 			else {
 				try {
 					dropTable(conn, parser2+"_vuln");	
 					createVuln(conn, parser2+"_vuln", parser2+"_base");
 					loadXmltoTable(conn, parser2+"_vuln");
-					System.out.println(" DROP and CREATE vuln "+parser2);
+					logwriter.writeConsole(" DROP and CREATE vuln "+parser2);
 				}
 				catch (Exception e) {
-					System.out.println(" DROP and CREATE vuln failed "+parser2);
+					logwriter.writeConsole(" DROP and CREATE vuln failed "+parser2);
 					throw e;
 				}  
 			}
@@ -179,19 +179,19 @@ public class DBUploader {
 	 * @throws	Exception
 	 */
 	public void uploadModifiedBase (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
-		System.out.println(" ");
+		logwriter.writeConsole(" ");
 		if(fpath.isEmpty()) {
-			System.out.println(" File_base_modified path is empty.");
+			logwriter.writeConsole(" File_base_modified path is empty.");
 		}
 		else {
 			File inputFile = new File(fpath);
 			if (!inputFile.exists()) {
-				System.out.println(" "+fpath + " does not exist.");
-				System.out.println(" Update base failed.");
+				logwriter.writeConsole(" "+fpath + " does not exist.");
+				logwriter.writeConsole(" Update base failed.");
 			}
 			else if (!inputFile.isFile()) {
-				System.out.println(" "+fpath + " is not a file.");
-				System.out.println(" Update base failed.");
+				logwriter.writeConsole(" "+fpath + " is not a file.");
+				logwriter.writeConsole(" Update base failed.");
 			}
 			else {
 				
@@ -243,22 +243,22 @@ public class DBUploader {
 							//nothing to do
 						}
 						if (cveN.isEmpty()) {
-							System.out.println(" There is no name of CVE (base_modified)\n" + fpath);
+							logwriter.writeConsole(" There is no name of CVE (base_modified)\n" + fpath);
 						}
 						else if (cveSeq.isEmpty()) {
-							System.out.println(" There is no seq of CVE (base_modified)\n" + fpath + ", " + cveN);
+							logwriter.writeConsole(" There is no seq of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
 						else if (cveType.isEmpty()) {
-							System.out.println(" There is no type of CVE (base_modified)\n" + fpath + ", " + cveN);
+							logwriter.writeConsole(" There is no type of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
 						else if (cvePub.isEmpty()) {
-							System.out.println(" There is no published of CVE (base_modified)\n" + fpath + ", " + cveN);
+							logwriter.writeConsole(" There is no published of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
 						else if (cveMod.isEmpty()) {
-							System.out.println(" There is no modified of CVE (base_modified)\n" + fpath + ", " + cveN);
+							logwriter.writeConsole(" There is no modified of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
 						else if (cveDesc.isEmpty()) {
-							System.out.println(" There is no `desc` of CVE (base_modified)\n" + fpath + ", " + cveN);
+							logwriter.writeConsole(" There is no `desc` of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
 						else {
 							query1.append("INSERT INTO "+parser1+"_base " +
@@ -338,14 +338,14 @@ public class DBUploader {
 							
 						}
 						if(temp*100/nList.getLength() > procrate) {
-							System.out.println(" upload modified base "+procrate+"%");
+							logwriter.writeConsole(" upload modified base "+procrate+"%");
 							procrate = procrate + 5;
 						}
 					}
 					
-					System.out.println(" upload modified base complete");
+					logwriter.writeConsole(" upload modified base complete");
 				} catch (Exception e) {
-					System.out.println(" upload modified base failed");
+					logwriter.writeConsole(" upload modified base failed");
 					throw e;
 				}  finally {
 					///nothing to do
@@ -377,19 +377,19 @@ public class DBUploader {
 	 * @throws	Exception
 	 */
 	public void uploadModifiedRefs (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
-		System.out.println(" ");
+		logwriter.writeConsole(" ");
 		if(fpath.isEmpty()) {
-			System.out.println(" File_refs_modified path is empty.");
+			logwriter.writeConsole(" File_refs_modified path is empty.");
 		}
 		else {
 			File inputFile = new File(fpath);
 			if (!inputFile.exists()) {
-				System.out.println(" "+fpath + " does not exist.");
-				System.out.println(" Update refs failed.");
+				logwriter.writeConsole(" "+fpath + " does not exist.");
+				logwriter.writeConsole(" Update refs failed.");
 			}
 			else if (!inputFile.isFile()) {
-				System.out.println(" "+fpath + " is not a file.");
-				System.out.println(" Update refs failed.");
+				logwriter.writeConsole(" "+fpath + " is not a file.");
+				logwriter.writeConsole(" Update refs failed.");
 			}
 			else {
 				
@@ -417,13 +417,13 @@ public class DBUploader {
 						String cveTemp = cveEntry.getAttribute("url");
 						String cveUrl = cveTemp.replace("'","\\'");
 						if (cveName.isEmpty()) {
-							System.out.println(" There is no name of CVE (refs_modified)\n" + fpath);
+							logwriter.writeConsole(" There is no name of CVE (refs_modified)\n" + fpath);
 						}
 						else if (cveSource.isEmpty()) {
-							System.out.println(" There is no source of CVE (refs_modified)\n" + fpath + ", " + cveName);
+							logwriter.writeConsole(" There is no source of CVE (refs_modified)\n" + fpath + ", " + cveName);
 						}
 						else if (cveUrl.isEmpty()) {
-							System.out.println(" There is no url of CVE (refs_modified)\n" + fpath + ", " + cveName);
+							logwriter.writeConsole(" There is no url of CVE (refs_modified)\n" + fpath + ", " + cveName);
 						}
 						else {
 							String parser1 = cveName.split("-")[1];
@@ -450,7 +450,7 @@ public class DBUploader {
 							try {
 								nvdQuery(conn, refsInsertQuery, input);
 							} catch (Exception e) {
-								System.out.println(" Cannot insert data into "+parser1+"_refs");
+								logwriter.writeConsole(" Cannot insert data into "+parser1+"_refs");
 								throw e;
 							} finally {
 								///nothing to do
@@ -460,15 +460,15 @@ public class DBUploader {
 							
 						}
 						if(temp*100/nList.getLength() > procrate) {
-							System.out.println(" upload modified refs "+procrate+"%");
+							logwriter.writeConsole(" upload modified refs "+procrate+"%");
 							procrate = procrate + 5;
 						}
 						
 					}
 				
-					System.out.println(" upload modified refs complete");
+					logwriter.writeConsole(" upload modified refs complete");
 				} catch (Exception e) {
-					System.out.println(" upload modified refs failed");
+					logwriter.writeConsole(" upload modified refs failed");
 					throw e;
 				}  finally {
 					///nothing to do
@@ -498,19 +498,19 @@ public class DBUploader {
 	 * @throws	Exception
 	 */
 	public void uploadModifiedVuln (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
-		System.out.println(" ");
+		logwriter.writeConsole(" ");
 		if(fpath.isEmpty()) {
-			System.out.println(" File_vuln_modified path is empty.");
+			logwriter.writeConsole(" File_vuln_modified path is empty.");
 		}
 		else {
 			File inputFile = new File(fpath);
 			if (!inputFile.exists()) {
-				System.out.println(" "+fpath + " does not exist.");
-				System.out.println(" Update vuln failed.");
+				logwriter.writeConsole(" "+fpath + " does not exist.");
+				logwriter.writeConsole(" Update vuln failed.");
 			}
 			else if (!inputFile.isFile()) {
-				System.out.println(" "+fpath + " is not a file.");
-				System.out.println(" Update vuln failed.");
+				logwriter.writeConsole(" "+fpath + " is not a file.");
+				logwriter.writeConsole(" Update vuln failed.");
 			}
 			else {
 				
@@ -540,13 +540,13 @@ public class DBUploader {
 						String cveNum = cveEntry.getAttribute("num");
 						String cveEdi = cveEntry.getAttribute("edition");
 						if (cveName.isEmpty()) {
-							System.out.println(" There is no name of CVE (vuln_modified)\n" + fpath);
+							logwriter.writeConsole(" There is no name of CVE (vuln_modified)\n" + fpath);
 						}
 						else if (cveProd.isEmpty()) {
-							System.out.println(" There is no prodname of CVE (vuln_modified)\n" + fpath + ", " + cveName);
+							logwriter.writeConsole(" There is no prodname of CVE (vuln_modified)\n" + fpath + ", " + cveName);
 						}
 						else if (cveVen.isEmpty()) {
-							System.out.println(" There is no vendor of CVE (vuln_modified)\n" + fpath + ", " + cveName);
+							logwriter.writeConsole(" There is no vendor of CVE (vuln_modified)\n" + fpath + ", " + cveName);
 						}
 						else {
 							String parser1 = cveName.split("-")[1];
@@ -593,16 +593,16 @@ public class DBUploader {
 							
 						}
 						if(temp*100/nList.getLength() > procrate) {
-							System.out.println(" upload modified vuln "+procrate+"%");
+							logwriter.writeConsole(" upload modified vuln "+procrate+"%");
 							procrate = procrate + 5;
 						}
 					}
 					
 					
 					
-					System.out.println(" upload modified vuln complete");
+					logwriter.writeConsole(" upload modified vuln complete");
 				} catch (Exception e) {
-					System.out.println(" upload modified vuln failed");
+					logwriter.writeConsole(" upload modified vuln failed");
 					throw e;
 				}  finally {
 					///nothing to do
@@ -655,7 +655,7 @@ public class DBUploader {
 		}
 		catch (Exception e) {
 			
-			System.out.println(" DROP and CREATE testing base table failed ");
+			logwriter.writeConsole(" DROP and CREATE testing base table failed ");
 			throw e;
 		} finally {
 			///nothing to do
@@ -735,13 +735,13 @@ public class DBUploader {
 					conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.dbId, ZipTagXml.dbPw);
 					
 				} else {
-					System.out.println(" Connection already exists");
+					logwriter.writeConsole(" Connection already exists");
 					
 				}
 			}
 			return conn;
 		} catch (Exception e) {
-			System.out.println(" connectToDB failed");
+			logwriter.writeConsole(" connectToDB failed");
 			return null;
 		} 
 	}
@@ -752,7 +752,7 @@ public class DBUploader {
 				conn.close();
 			}
 		} catch (Exception e) {
-			System.out.println(" disconnectDB failed");
+			logwriter.writeConsole(" disconnectDB failed");
 			throw e;
 		}
 	}
@@ -766,7 +766,7 @@ public class DBUploader {
 			NodeList nList = doc.getElementsByTagName("entry");
 			return nList;
 		} catch (Exception e) {
-			System.out.println(" makeNodeList failed");
+			logwriter.writeConsole(" makeNodeList failed");
 			throw e;
 		}
 
@@ -792,7 +792,7 @@ public class DBUploader {
 			
 			queryCreate.execute();
 		} catch (Exception e) {
-			System.out.println(" Query Error!");
+			logwriter.writeConsole(" Query Error!");
 			throw e;
 		} finally {
 			///nothing to do

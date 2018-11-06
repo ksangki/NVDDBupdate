@@ -26,7 +26,7 @@ public class Logwriter {
 	 * 			The contents of log
 	 * @throws	Exception
 	 */
-	public void write(String fpath, String logstring) throws Exception {
+	public void writeFile(String fpath, String logstring) throws Exception {
 		
 		try (PrintWriter fw = new PrintWriter(new FileWriter(fpath,true))){
 			fw.println(logstring);
@@ -36,5 +36,9 @@ public class Logwriter {
 		} finally {
 			///nothing to do
 		}
+	}
+	
+	public void writeConsole(String logstring) {
+		System.out.println(logstring);
 	}
 }

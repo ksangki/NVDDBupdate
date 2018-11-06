@@ -47,6 +47,7 @@ public class ZipTagXml {
 		static String dbId = "sktelecom";       
 		static String dbPw = "sktelecom";       
 
+		Logwriter logwriter = new Logwriter();
 		/**
 		 * @brief	Encode document in UTF-8 and save it by .xml file
 		 * @param	document
@@ -80,7 +81,7 @@ public class ZipTagXml {
 			try {
 				filewriter.write(finalString);
 			} catch (Exception e) {
-				System.out.println(" Cannot write log");
+				logwriter.writeConsole(" Cannot write log");
 			} finally {
 				filewriter.close();
 			}
@@ -177,54 +178,54 @@ public class ZipTagXml {
 			File translated =new File("./"+ZipTagXml.translated);
 			File log =new File("./"+ZipTagXml.log);
 			// check and create directories
-			System.out.println(" ");
+			logwriter.writeConsole(" ");
 			if(!nvdcve.exists()){
 				if(nvdcve.mkdir()) {
-					System.out.println(" nvdcve directory is successfully created.");
+					logwriter.writeConsole(" nvdcve directory is successfully created.");
 				}
 				else {
-					System.out.println(" Fail to create nvdcve directory.");
+					logwriter.writeConsole(" Fail to create nvdcve directory.");
 					System.exit(1);
 				}
 			}
 			else{
-				System.out.println(" nvdcve directory is already created.");
+				logwriter.writeConsole(" nvdcve directory is already created.");
 			}
 			if(!original.exists()){
 				if(original.mkdir()) {
-					System.out.println(" original directory is successfully created.");
+					logwriter.writeConsole(" original directory is successfully created.");
 				}
 				else {
-					System.out.println(" Fail to create original directory.");
+					logwriter.writeConsole(" Fail to create original directory.");
 					System.exit(1);
 				}
 			}
 			else{
-				System.out.println(" original directory is already created.");
+				logwriter.writeConsole(" original directory is already created.");
 			}
 			if(!translated.exists()){
 				if(translated.mkdir()) {
-					System.out.println(" translated directory is successfully created.");
+					logwriter.writeConsole(" translated directory is successfully created.");
 				}
 				else {
-					System.out.println(" Fail to create translated directory.");
+					logwriter.writeConsole(" Fail to create translated directory.");
 					System.exit(1);
 				}
 			}
 			else{
-				System.out.println(" translated directory is already created.");
+				logwriter.writeConsole(" translated directory is already created.");
 			}
 			if(!log.exists()){
 				if(log.mkdir()) {
-					System.out.println(" log directory is successfully created.");
+					logwriter.writeConsole(" log directory is successfully created.");
 				}
 				else {
-					System.out.println(" Fail to create log directory.");
+					logwriter.writeConsole(" Fail to create log directory.");
 					System.exit(1);
 				}
 			}
 			else{
-				System.out.println(" log directory is already created.");
+				logwriter.writeConsole(" log directory is already created.");
 			}
 		}
 		
@@ -243,10 +244,10 @@ public class ZipTagXml {
 	        // create output directory if it doesn't exist
 	        if(!targetDir.exists()) {
 	        	if(targetDir.mkdirs()) {
-	        		System.out.println(" "+destDir + " is successfully created.");
+	        		logwriter.writeConsole(" "+destDir + " is successfully created.");
 	        	}
 	        	else {
-	        		System.out.println(" Fail to create " + destDir);
+	        		logwriter.writeConsole(" Fail to create " + destDir);
 	        		System.exit(1);
 	        	}
 	        }
@@ -272,7 +273,7 @@ public class ZipTagXml {
 			                	outputStream.write(buffer, 0, len);
 			                }
 		                } catch (Exception e) {
-		                	System.out.println(" FileOutputStream error");
+		                	logwriter.writeConsole(" FileOutputStream error");
 		                } finally {
 		                	outputStream.close();
 		                }
@@ -290,7 +291,7 @@ public class ZipTagXml {
 		            }
 	            //close last ZipEntry
 	        } catch (IOException e) {
-	        	System.out.println(" "+zipFilePath + "unzip failed");
+	        	logwriter.writeConsole(" "+zipFilePath + "unzip failed");
 	        } finally {
 	        	fileStream.close();
 	        }
