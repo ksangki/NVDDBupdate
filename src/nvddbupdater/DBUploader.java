@@ -101,11 +101,17 @@ public class DBUploader {
 			parser2 = parser1.split("_")[0];
 			String nTable = parser2+baseType;
 			try {
+				System.out.println("1");
 				setForeignKey(conn, 0);
+				System.out.println("2");
 				dropTable(conn, nTable);
+				System.out.println("3");
 				createBase(conn, nTable);
+				System.out.println("4");
 				loadXmltoTable(conn, nTable);
+				System.out.println("5");
 				setForeignKey(conn, 1);
+				System.out.println("6");
 				logwriter.writeConsole(" DROP and CREATE base "+parser2);
 			}
 			catch (Exception e) {
@@ -724,11 +730,10 @@ public class DBUploader {
 	}
 	
 	public Connection connectToDB() throws Exception{
-		Connection newConn = null;
+		
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			newConn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.dbId, ZipTagXml.dbPw);
-			return newConn;
+			return DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.dbId, ZipTagXml.dbPw);
 		} catch (Exception e) {
 			logwriter.writeConsole(" connectToDB failed");
 			return null;
@@ -757,15 +762,17 @@ public class DBUploader {
 
 	}
 	
-	public void nvdQuery (Connection conn, String query, String input[]) throws Exception {
+	public void nvdQuery (Connection conn, String query, String[] input) throws Exception {
 		
 		try (PreparedStatement queryCreate = conn.prepareStatement(query)){
 			
 			if (input == null) {
 				///nothing to do
 			} else {
+				int queryIndex = 1;
 				for(int inputIndex = 0; inputIndex < input.length; inputIndex++) {
-					queryCreate.setString(inputIndex, input[inputIndex]);
+					queryCreate.setString(queryIndex, input[inputIndex]);
+					queryIndex = queryIndex + 1;
 				}
 			}
 			

@@ -186,9 +186,9 @@ public class Main {
 			}
 		}
 		logwriter.writeConsole(" ");
-		Connection conn = null;
+		
 		try {	
-			conn = uploaderDB.connectToDB();
+			Connection conn = uploaderDB.connectToDB();
 		
 			for(int i = 2002; i <= thisyear ; i++) {
 				uploaderDB.initNUploadBase(conn,"./"+ZipTagXml.translated+"/nvdcve-"+i+"_base.xml");
