@@ -75,11 +75,11 @@ public class UpdateDBT {
 		}
 		Connection conn = null;
 		try {
-			conn = uploaderDB.connectToDB(conn);
+			conn = uploaderDB.connectToDB();
 			uploaderDB.uploadModifiedBase(conn,"./" + ZipTagXml.translated + "/nvdcve-modified_base.xml",lastyear != newyear, newyear);
 			uploaderDB.uploadModifiedRefs(conn,"./" + ZipTagXml.translated + "/nvdcve-modified_refs.xml",lastyear != newyear, newyear);
 			uploaderDB.uploadModifiedVuln(conn,"./" + ZipTagXml.translated + "/nvdcve-modified_vuln.xml",lastyear != newyear, newyear);
-			uploaderDB.disconnectDB(conn);
+			conn.close();
 			
 			try {
 				Date date2 = new Date();

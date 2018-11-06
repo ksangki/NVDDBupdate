@@ -27,6 +27,7 @@ public class Main {
 	static ZipTagXml ztx = new ZipTagXml();
 	static Logwriter logwriter = new Logwriter();
 	static String nLogFile = "/log.txt";
+	static String pLog = "./"+ZipTagXml.log+nLogFile;
 	static String logError = " Cannot write log.";
 	/**
 	 * @brief	Main process
@@ -123,7 +124,7 @@ public class Main {
 				initNSet();
 				runUpdateThread(false);
 			} catch (Exception e) {
-				logwriter.writeConsole("Initialization failed");
+				logwriter.writeConsole(" Initialization failed");
 			} finally {
 				logwriter.writeConsole(" ...");
 			}
@@ -165,7 +166,7 @@ public class Main {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		int thisyear = Calendar.getInstance().get(Calendar.YEAR);
 		ztx.makeDir();
-		if(!writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Start initializing NVD.")) {
+		if(!writeFileLog(pLog,dateFormat.format(date) +" Start initializing NVD.")) {
 			throw new Exception();
 		}
 		
@@ -178,7 +179,7 @@ public class Main {
 				GetData.makeTranslatedFile("nvdcve-"+i);
 			} catch (Exception e) {
 				date = new Date();
-				writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Get_data for initialization failed.");
+				writeFileLog(pLog,dateFormat.format(date) +" Get_data for initialization failed.");
 				logwriter.writeConsole(" "+dateFormat.format(date) + " Get_Data for initialization failed.");
 				logwriter.writeConsole(" ");
 				throw e;
@@ -187,7 +188,7 @@ public class Main {
 		logwriter.writeConsole(" ");
 		Connection conn = null;
 		try {	
-			conn = uploaderDB.connectToDB(conn);
+			conn = uploaderDB.connectToDB();
 		
 			for(int i = 2002; i <= thisyear ; i++) {
 				uploaderDB.initNUploadBase(conn,"./"+ZipTagXml.translated+"/nvdcve-"+i+"_base.xml");
@@ -196,18 +197,13 @@ public class Main {
 				
 			}
 			uploaderDB.setTestingTable(conn);
-			uploaderDB.disconnectDB(conn);
+			conn.close();
 			date = new Date();
-			try {
-				logwriter.writeFile("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" All NVD tables are Dropped and created.");
-				
-			} catch (Exception e) {
-				logwriter.writeConsole(logError);
-				throw e;
-			}
+			writeFileLog(pLog,dateFormat.format(date) +" All NVD tables are Dropped and created.");
+			
 		} catch (Exception e) {
 			date = new Date();
-			writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Get_data for initialization failed.");
+			writeFileLog(pLog,dateFormat.format(date) +" Get_data for initialization failed.");
 			throw e;
 		}
 		
@@ -246,7 +242,7 @@ public class Main {
 					} catch (Exception e) {
 						logwriter.writeConsole(" Cannot update modified data.");
 						date = new Date();
-						writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Update failed. (Update DB failed)");
+						writeFileLog(pLog,dateFormat.format(date) +" Update failed. (Update DB failed)");
 						Thread.currentThread().interrupt();
 					}
 					try {
@@ -257,7 +253,7 @@ public class Main {
 							timeIndicator.setTime(sDataform.parse(sDataform.format(date2)));
 						} catch (Exception e) {
 							date = new Date();
-							writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Thread could not sleep. (Failed to set time)");
+							writeFileLog(pLog,dateFormat.format(date) +" Thread could not sleep. (Failed to set time)");
 							Thread.currentThread().interrupt();
 						}
 						date2 = timeIndicator.getTime();
@@ -274,7 +270,7 @@ public class Main {
 						}
 					} catch (InterruptedException e) {
 						date = new Date();
-						writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Thread could not sleep. (Failed to call sleep method)");
+						writeFileLog(pLog,dateFormat.format(date) +" Thread could not sleep. (Failed to call sleep method)");
 						logwriter.writeConsole(" Quit update thread");
 						Thread.currentThread().interrupt();
 					}

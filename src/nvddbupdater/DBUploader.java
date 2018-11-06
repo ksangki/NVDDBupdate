@@ -52,6 +52,7 @@ public class DBUploader {
 				logwriter.writeConsole(" "+fpath + " does not exist.");
 				logwriter.writeConsole(" If there is " + parser2 + typeTable + " table already, use it.");
 				logwriter.writeConsole(" If not, " + parser2 + typeTable + " table is not created.");
+				
 				return false;
 			}
 			else if (!fpth.isFile()) {
@@ -722,40 +723,19 @@ public class DBUploader {
 		nvdQuery(conn, deleteQuery, input);
 	}
 	
-	public Connection connectToDB(Connection conn) throws Exception{
-		
+	public Connection connectToDB() throws Exception{
+		Connection newConn = null;
 		try {
-			if (conn == null) {
-				Class.forName("com.mysql.cj.jdbc.Driver");
-				conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.dbId, ZipTagXml.dbPw);
-				
-			} else {
-				if (conn.isClosed()) {
-					Class.forName("com.mysql.cj.jdbc.Driver");
-					conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.dbId, ZipTagXml.dbPw);
-					
-				} else {
-					logwriter.writeConsole(" Connection already exists");
-					
-				}
-			}
-			return conn;
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			newConn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.dbId, ZipTagXml.dbPw);
+			return newConn;
 		} catch (Exception e) {
 			logwriter.writeConsole(" connectToDB failed");
 			return null;
 		} 
 	}
 	
-	public void disconnectDB(Connection conn) throws Exception {
-		try {
-			if(!conn.isClosed()) {
-				conn.close();
-			}
-		} catch (Exception e) {
-			logwriter.writeConsole(" disconnectDB failed");
-			throw e;
-		}
-	}
+	
 	
 	public NodeList makeNodeList(File inputFile) throws Exception {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
