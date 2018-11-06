@@ -114,13 +114,13 @@ public class ZipTagXml {
 		 * @param	parent
 		 * 			type: Element
 		 * 			Element of _base file
-		 * @param	tag_name
+		 * @param	tagName
 		 * 			type: String
 		 * 			The name of attribute on parent
 		 */
-		void setTagfromText (Element nNode, Element parent, String tag_name) {
+		void setTagfromText (Element nNode, Element parent, String tagName) {
 			String temp = nNode.getTextContent(); // tag contents
-			parent.setAttribute(tag_name, temp);
+			parent.setAttribute(tagName, temp);
 		}
 		
 		/**

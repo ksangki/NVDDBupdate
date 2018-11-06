@@ -29,7 +29,7 @@ public class GetData {
 		logwriter.writeConsole(" ");
 		try (InputStream in = new URL("https://nvd.nist.gov/feeds/xml/cve/1.2/"+fpath).openStream()) {
 			Files.copy(in, Paths.get("./" + ZipTagXml.original + "/"+fpath), StandardCopyOption.REPLACE_EXISTING);
-			in.close();
+			
 			String zipfilepath = "./" + ZipTagXml.original + "/"+fpath;
 			String dest = "./" + ZipTagXml.nvdcve;
 			ztx.unzip(zipfilepath, dest);
@@ -42,9 +42,9 @@ public class GetData {
 	
 	
 	public static void makeTranslatedFile(String fname) throws Exception {
-		String file_path = "./"+ZipTagXml.nvdcve + "/" + fname + ".xml";
+		String filePath = "./"+ZipTagXml.nvdcve + "/" + fname + ".xml";
 		try {
-			File inputFile = new File(file_path);
+			File inputFile = new File(filePath);
 			
 			if(inputFile.isFile()) {
 				// normalization

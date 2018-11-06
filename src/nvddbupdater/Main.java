@@ -26,6 +26,8 @@ import java.util.Scanner;
 public class Main {
 	static ZipTagXml ztx = new ZipTagXml();
 	static Logwriter logwriter = new Logwriter();
+	static String nLogFile = "/log.txt";
+	static String logError = " Cannot write log.";
 	/**
 	 * @brief	Main process
 	 * @param	args
@@ -163,14 +165,10 @@ public class Main {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		int thisyear = Calendar.getInstance().get(Calendar.YEAR);
 		ztx.makeDir();
+		if(!writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Start initializing NVD.")) {
+			throw new Exception();
+		}
 		
-		try {
-			logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Start initializing NVD.");
-			
-		} catch (Exception e) {
-			logwriter.writeConsole(" Cannot write log.");
-			throw e;
-		} 
 		logwriter.writeConsole(" ");
 		logwriter.writeConsole(" "+dateFormat.format(date) +" Start initializing NVD.");
 		
@@ -180,12 +178,7 @@ public class Main {
 				GetData.makeTranslatedFile("nvdcve-"+i);
 			} catch (Exception e) {
 				date = new Date();
-				try {
-					logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Get_data for initialization failed.");
-				} catch (Exception e2) {
-					logwriter.writeConsole(" Cannot write log.");
-					throw e2;
-				}
+				writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Get_data for initialization failed.");
 				logwriter.writeConsole(" "+dateFormat.format(date) + " Get_Data for initialization failed.");
 				logwriter.writeConsole(" ");
 				throw e;
@@ -206,21 +199,15 @@ public class Main {
 			uploaderDB.disconnectDB(conn);
 			date = new Date();
 			try {
-				logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" All NVD tables are Dropped and created.");
+				logwriter.writeFile("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" All NVD tables are Dropped and created.");
 				
 			} catch (Exception e) {
-				logwriter.writeConsole(" Cannot write log.");
+				logwriter.writeConsole(logError);
 				throw e;
 			}
 		} catch (Exception e) {
 			date = new Date();
-			try {
-				logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Connection to DB for initialization failed.");
-			} catch (Exception e2) {
-				logwriter.writeConsole(" Cannot write log.");
-				throw e2;
-			}
-			
+			writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Get_data for initialization failed.");
 			throw e;
 		}
 		
@@ -259,14 +246,7 @@ public class Main {
 					} catch (Exception e) {
 						logwriter.writeConsole(" Cannot update modified data.");
 						date = new Date();
-						try {
-							logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Update failed. (Update DB failed)");
-							
-						} catch (Exception e2) {
-							logwriter.writeConsole(" Cannot write log.");
-							Thread.currentThread().interrupt();
-						}
-						
+						writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Update failed. (Update DB failed)");
 						Thread.currentThread().interrupt();
 					}
 					try {
@@ -277,14 +257,7 @@ public class Main {
 							timeIndicator.setTime(sDataform.parse(sDataform.format(date2)));
 						} catch (Exception e) {
 							date = new Date();
-							try {
-								logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Thread could not sleep. (Failed to set time)");
-								
-							} catch (Exception e2) {
-								logwriter.writeConsole(" Cannot write log.");
-								Thread.currentThread().interrupt();
-							}
-							
+							writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Thread could not sleep. (Failed to set time)");
 							Thread.currentThread().interrupt();
 						}
 						date2 = timeIndicator.getTime();
@@ -301,13 +274,7 @@ public class Main {
 						}
 					} catch (InterruptedException e) {
 						date = new Date();
-						try {
-							logwriter.writeFile("./"+ZipTagXml.log+"/log.txt",dateFormat.format(date) +" Thread could not sleep. (Failed to call sleep method)");
-							
-						} catch (Exception e2) {
-							logwriter.writeConsole(" Cannot write log.");
-							Thread.currentThread().interrupt();
-						}
+						writeFileLog("./"+ZipTagXml.log+nLogFile,dateFormat.format(date) +" Thread could not sleep. (Failed to call sleep method)");
 						logwriter.writeConsole(" Quit update thread");
 						Thread.currentThread().interrupt();
 					}
@@ -318,5 +285,15 @@ public class Main {
 		Thread thread = new Thread(runnable);
 		thread.start();	
 
+	}
+	
+	private static boolean writeFileLog (String fpath, String log){
+		try {
+			logwriter.writeFile(fpath,log);
+			return true;
+		} catch (Exception e) {
+			logwriter.writeConsole(logError);
+			return false;
+		}
 	}
 }
