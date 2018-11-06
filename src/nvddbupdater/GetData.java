@@ -21,10 +21,10 @@ import org.w3c.dom.Document;
  * @brief	Connect to NVD data feed and download .xml.zip file
  * @warning	URL of NVD data feed should be checked first
  */
-public class Get_data {
+public class GetData {
 	static ZipTagXml ztx = new ZipTagXml();
 	
-	public static void get_data(String fpath) throws Exception {
+	public static void getData(String fpath) throws Exception {
 		System.out.println(" ");
 		try (InputStream in = new URL("https://nvd.nist.gov/feeds/xml/cve/1.2/"+fpath).openStream()) {
 			Files.copy(in, Paths.get("./" + ZipTagXml.original + "/"+fpath), StandardCopyOption.REPLACE_EXISTING);
@@ -40,7 +40,7 @@ public class Get_data {
 	}
 	
 	
-	public static void make_translated_file(String fname) throws Exception {
+	public static void makeTranslatedFile(String fname) throws Exception {
 		String file_path = "./"+ZipTagXml.nvdcve + "/" + fname + ".xml";
 		try {
 			File inputFile = new File(file_path);
@@ -53,9 +53,9 @@ public class Get_data {
 				doc.getDocumentElement().normalize();
 			
 		       	// make translated files
-		       	Make_base.make_base_b(doc, "./"+ZipTagXml.translated + "/" + fname + "_base.xml");
-		       	Make_refs.make_refs_b(doc, "./"+ZipTagXml.translated+"/"+fname + "_refs.xml");
-		       	Make_vuln.make_vuln_b(doc, "./"+ZipTagXml.translated+"/"+fname+"_vuln.xml");
+		       	MakeBase.makeBase(doc, "./"+ZipTagXml.translated + "/" + fname + "_base.xml");
+		       	MakeRefs.makeRefs(doc, "./"+ZipTagXml.translated+"/"+fname + "_refs.xml");
+		       	MakeVuln.makeVuln(doc, "./"+ZipTagXml.translated+"/"+fname+"_vuln.xml");
 		       	System.out.println(" Success Translating from "+fname+" to "+fname+"_base, "+fname+"_refs, "+fname+"_vuln");
 			}
 			else {

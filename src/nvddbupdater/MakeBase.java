@@ -21,7 +21,7 @@ import javax.xml.parsers.DocumentBuilder;
  * @brief	There is a method that make base file
  * @warning	NULL
  */
-public class Make_base {
+public class MakeBase {
 	static ZipTagXml ztx = new ZipTagXml();
 	
 	/**
@@ -40,7 +40,7 @@ public class Make_base {
 	 * 			The file path of base file
 	 * @throws	Exception
 	 */
-	public static void make_base_b (Document doc, String fpath) throws Exception {
+	public static void makeBase (Document doc, String fpath) throws Exception {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = null;
 		try {
@@ -62,10 +62,10 @@ public class Make_base {
 			Element eElement = (Element) nNode;
 			Element entry = document.createElement("entry");
 			            
-			ztx.set_all_tag(eElement, entry);
+			ztx.setTagAll(eElement, entry);
 				            
 			Element desc = (Element) eElement.getElementsByTagName("desc").item(0);
-			ztx.set_tag_fromtext(desc, entry, "desc");
+			ztx.setTagfromText(desc, entry, "desc");
 			root.appendChild(entry);	
 			}
 			ztx.transforming(document, fpath); 	    

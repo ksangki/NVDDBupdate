@@ -22,7 +22,7 @@ import org.w3c.dom.Element;
  * @brief	There is a method that make refs file
  * @warning	NULL
  */
-public class Make_refs {
+public class MakeRefs {
 	static ZipTagXml ztx = new ZipTagXml();
 	
 	/**
@@ -41,7 +41,7 @@ public class Make_refs {
 	 * 			The file path of reference file
 	 * @throws	Exception
 	 */
-	public static void make_refs_b  (Document doc, String fpath) throws Exception {
+	public static void makeRefs  (Document doc, String fpath) throws Exception {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = null;
 		try {
@@ -68,9 +68,9 @@ public class Make_refs {
 					Node nRef = refList.item(reftmp);
 					Element refElement = (Element) nRef;
 
-					ztx.set_tag(eElement, entry, "name");
-					ztx.set_tag(refElement, entry, "source");
-					ztx.set_tag(refElement, entry, "url");
+					ztx.setTag(eElement, entry, "name");
+					ztx.setTag(refElement, entry, "source");
+					ztx.setTag(refElement, entry, "url");
 
 					root.appendChild(entry);
 				}

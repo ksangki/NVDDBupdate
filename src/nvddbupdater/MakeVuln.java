@@ -22,7 +22,7 @@ import org.w3c.dom.Element;
  * @brief	There is a method that make vuln file
  * @warning	NULL
  */
-public class Make_vuln {
+public class MakeVuln {
 	static ZipTagXml ztx = new ZipTagXml();
 	
 	/**
@@ -41,7 +41,7 @@ public class Make_vuln {
 	 * 			The file path of vulnerability file
 	 * @throws	Exception
 	 */
-	public static void make_vuln_b (Document doc, String fpath) throws Exception {
+	public static void makeVuln (Document doc, String fpath) throws Exception {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = null;
 		try {
@@ -74,12 +74,12 @@ public class Make_vuln {
 
 						Element entry = document.createElement("entry");
 
-						ztx.set_tag(eElement, entry, "name");
+						ztx.setTag(eElement, entry, "name");
 						String prodname = prodElement.getAttribute("name"); // tag contents
 						entry.setAttribute("prodname", prodname);
-						ztx.set_tag(prodElement, entry, "vendor");
-						ztx.set_tag(versElement, entry, "num");
-						ztx.set_tag(versElement, entry, "edition");
+						ztx.setTag(prodElement, entry, "vendor");
+						ztx.setTag(versElement, entry, "num");
+						ztx.setTag(versElement, entry, "edition");
 						root.appendChild(entry); // create child
 					}
 				}

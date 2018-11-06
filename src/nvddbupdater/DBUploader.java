@@ -32,7 +32,7 @@ public class DBUploader {
 	 * 			The file name should be '<year>_base.xml'
 	 * 			The table name will be created on 'nvd' database is <year>_base
 	 */
-	public void init_and_upload_base(Connection conn, String fpath) throws Exception {
+	public void initNUploadBase(Connection conn, String fpath) throws Exception {
 		if(fpath.isEmpty()) {
 			System.out.println(" File_base path is empty.");
 		}
@@ -54,9 +54,9 @@ public class DBUploader {
 			else {
 				try {
 					setForeignKey(conn, 0);
-					drop_table(conn, parser2+"_base");
-					create_base(conn, parser2+"_base");
-					load_xml_to_table(conn, parser2+"_base");
+					dropTable(conn, parser2+"_base");
+					createBase(conn, parser2+"_base");
+					loadXmltoTable(conn, parser2+"_base");
 					setForeignKey(conn, 1);
 					System.out.println(" DROP and CREATE base "+parser2);
 				}
@@ -76,7 +76,7 @@ public class DBUploader {
 	 * 			The file name should be '<year>_refs.xml'
 	 * 			The table name will be created on 'nvd' database is <year>_refs
 	 */
-	public void init_and_upload_refs(Connection conn, String fpath) throws Exception {
+	public void initNUploadRefs(Connection conn, String fpath) throws Exception {
 		
 		if (fpath.isEmpty()) {
 			System.out.println(" File_refs path is empty.");
@@ -98,9 +98,9 @@ public class DBUploader {
 			}
 			else {
 				try {
-					drop_table(conn, parser2+"_refs");	
-					create_refs(conn, parser2+"_refs", parser2+"_base");
-					load_xml_to_table(conn, parser2+"_refs");
+					dropTable(conn, parser2+"_refs");	
+					createRefs(conn, parser2+"_refs", parser2+"_base");
+					loadXmltoTable(conn, parser2+"_refs");
 					System.out.println(" DROP and CREATE refs "+parser2);
 				}
 				catch (Exception e) {
@@ -122,7 +122,7 @@ public class DBUploader {
 	 * 			The file name should be '<year>_vuln.xml'
 	 * 			The table name will be created on 'nvd' database is <year>_vuln
 	 */
-	public void init_and_upload_vuln(Connection conn, String fpath) throws Exception {
+	public void initNUploadVuln(Connection conn, String fpath) throws Exception {
 		if (fpath.isEmpty()) {
 			System.out.println(" File_vuln path is empty.");
 		}
@@ -144,9 +144,9 @@ public class DBUploader {
 			}
 			else {
 				try {
-					drop_table(conn, parser2+"_vuln");	
-					create_vuln(conn, parser2+"_vuln", parser2+"_base");
-					load_xml_to_table(conn, parser2+"_vuln");
+					dropTable(conn, parser2+"_vuln");	
+					createVuln(conn, parser2+"_vuln", parser2+"_base");
+					loadXmltoTable(conn, parser2+"_vuln");
 					System.out.println(" DROP and CREATE vuln "+parser2);
 				}
 				catch (Exception e) {
@@ -178,7 +178,7 @@ public class DBUploader {
 	 * 			If IsNewYear is true, this method create new table referenced by newyear
 	 * @throws	Exception
 	 */
-	public void upload_base_modified (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
+	public void uploadModifiedBase (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
 		System.out.println(" ");
 		if(fpath.isEmpty()) {
 			System.out.println(" File_base_modified path is empty.");
@@ -201,36 +201,36 @@ public class DBUploader {
 					// make node list.
 					
 					if(IsNewYear) {
-						create_base(conn, newyear+"_base");
+						createBase(conn, newyear+"_base");
 					}
 					else {
 						///nothing to do
 					}
 					setForeignKey(conn, 0);
-					drop_table(conn, "modified_base");
-					create_base(conn, "modified_base");
-					load_xml_to_table(conn, "modified_base");
+					dropTable(conn, "modified_base");
+					createBase(conn, "modified_base");
+					loadXmltoTable(conn, "modified_base");
 					setForeignKey(conn, 1);
-					NodeList nList = make_nodelist(inputFile);
+					NodeList nList = makeNodeList(inputFile);
 					int procrate = 5;
 					for (int temp = 0; temp < nList.getLength(); temp++) {
 						// parse year of CVE
-						Element cve_name = (Element) nList.item(temp);
-						String cve_n = cve_name.getAttribute("name");
-						String cve_s = cve_name.getAttribute("seq");
-						String cve_t = cve_name.getAttribute("type");
-						String cve_p = cve_name.getAttribute("published");
-						String cve_m = cve_name.getAttribute("modified");
-						String cve_cv = cve_name.getAttribute("CVSS_vector");
-						String cve_ce = cve_name.getAttribute("CVSS_exploit_subscore");
-						String cve_ci = cve_name.getAttribute("CVSS_impact_subscore");
-						String cve_cb = cve_name.getAttribute("CVSS_base_score");
-						String cve_cvs = cve_name.getAttribute("CVSS_version");
-						String cve_sv = cve_name.getAttribute("severity");
-						String cve_d = cve_name.getAttribute("desc");
-						String cve_ddd = cve_d.replace("\\", "\\"+"\\");
-						String cve_dd = cve_ddd.replace("'", "\\'");
-						String parser1 = cve_n.split("-")[1];
+						Element cveName = (Element) nList.item(temp);
+						String cveN = cveName.getAttribute("name");
+						String cveSeq = cveName.getAttribute("seq");
+						String cveType = cveName.getAttribute("type");
+						String cvePub = cveName.getAttribute("published");
+						String cveMod = cveName.getAttribute("modified");
+						String cveCV = cveName.getAttribute("CVSS_vector");
+						String cveEx = cveName.getAttribute("CVSS_exploit_subscore");
+						String cveImp = cveName.getAttribute("CVSS_impact_subscore");
+						String cveBase = cveName.getAttribute("CVSS_base_score");
+						String cveVer = cveName.getAttribute("CVSS_version");
+						String cveSev = cveName.getAttribute("severity");
+						String cveTemp = cveName.getAttribute("desc");
+						String cveTempT = cveTemp.replace("\\", "\\"+"\\");
+						String cveDesc = cveTempT.replace("'", "\\'");
+						String parser1 = cveN.split("-")[1];
 						StringBuffer query1 = new StringBuffer();
 						StringBuffer query2 = new StringBuffer();
 						StringBuffer query3 = new StringBuffer();
@@ -242,90 +242,90 @@ public class DBUploader {
 						else {
 							//nothing to do
 						}
-						if (cve_n.isEmpty()) {
+						if (cveN.isEmpty()) {
 							System.out.println(" There is no name of CVE (base_modified)\n" + fpath);
 						}
-						else if (cve_s.isEmpty()) {
-							System.out.println(" There is no seq of CVE (base_modified)\n" + fpath + ", " + cve_n);
+						else if (cveSeq.isEmpty()) {
+							System.out.println(" There is no seq of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
-						else if (cve_t.isEmpty()) {
-							System.out.println(" There is no type of CVE (base_modified)\n" + fpath + ", " + cve_n);
+						else if (cveType.isEmpty()) {
+							System.out.println(" There is no type of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
-						else if (cve_p.isEmpty()) {
-							System.out.println(" There is no published of CVE (base_modified)\n" + fpath + ", " + cve_n);
+						else if (cvePub.isEmpty()) {
+							System.out.println(" There is no published of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
-						else if (cve_m.isEmpty()) {
-							System.out.println(" There is no modified of CVE (base_modified)\n" + fpath + ", " + cve_n);
+						else if (cveMod.isEmpty()) {
+							System.out.println(" There is no modified of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
-						else if (cve_dd.isEmpty()) {
-							System.out.println(" There is no `desc` of CVE (base_modified)\n" + fpath + ", " + cve_n);
+						else if (cveDesc.isEmpty()) {
+							System.out.println(" There is no `desc` of CVE (base_modified)\n" + fpath + ", " + cveN);
 						}
 						else {
 							query1.append("INSERT INTO "+parser1+"_base " +
 									"(name, seq, type, published, modified, " 
 									);
-							query2.append("VALUES ('"+cve_n+"','"+cve_s+"','"+cve_t+"','"+cve_p+"','"+cve_m+"',");
-							query3.append("ON DUPLICATE KEY UPDATE modified= '"+cve_m+"', ");
+							query2.append("VALUES ('"+cveN+"','"+cveSeq+"','"+cveType+"','"+cvePub+"','"+cveMod+"',");
+							query3.append("ON DUPLICATE KEY UPDATE modified= '"+cveMod+"', ");
 							
 								
 							
-							if (!cve_cv.isEmpty()) {
+							if (!cveCV.isEmpty()) {
 								query1.append("CVSS_vector, ");
-								query2.append("'"+cve_cv+"', ");
-								query3.append("CVSS_vector ='"+cve_cv+"', ");
+								query2.append("'"+cveCV+"', ");
+								query3.append("CVSS_vector ='"+cveCV+"', ");
 								
 							}
 							else {
 								//nothing to do
 							}
-							if (!cve_ce.isEmpty()) {
+							if (!cveEx.isEmpty()) {
 								query1.append("CVSS_exploit_subscore, ");
-								query2.append(""+cve_ce+", ");
-								query3.append("CVSS_exploit_subscore ="+cve_ce+", ");
+								query2.append(""+cveEx+", ");
+								query3.append("CVSS_exploit_subscore ="+cveEx+", ");
 								
 							}
 							else {
 								//nothing to do
 							}
-							if (!cve_ci.isEmpty()) {
+							if (!cveImp.isEmpty()) {
 								query1.append("CVSS_impact_subscore, ");
-								query2.append(""+cve_ci+", ");
-								query3.append("CVSS_impact_subscore ="+cve_ci+", ");
+								query2.append(""+cveImp+", ");
+								query3.append("CVSS_impact_subscore ="+cveImp+", ");
 								
 							}
 							else {
 								//nothing to do
 							}
-							if (!cve_cb.isEmpty()) {
+							if (!cveBase.isEmpty()) {
 								query1.append("CVSS_base_score, ");
-								query2.append(""+cve_cb+", ");
-								query3.append("CVSS_base_score ="+cve_cb+", ");
+								query2.append(""+cveBase+", ");
+								query3.append("CVSS_base_score ="+cveBase+", ");
 								
 							}
 							else {
 								//nothing to do
 							}
-							if (!cve_cvs.isEmpty()) {
+							if (!cveVer.isEmpty()) {
 								query1.append("CVSS_version, ");
-								query2.append(""+cve_cvs+", ");
-								query3.append("CVSS_version ="+cve_cvs+", ");
+								query2.append(""+cveVer+", ");
+								query3.append("CVSS_version ="+cveVer+", ");
 								
 							}
 							else {
 								//nothing to do
 							}
-							if (!cve_sv.isEmpty()) {
+							if (!cveSev.isEmpty()) {
 								query1.append("severity, ");
-								query2.append("'"+cve_sv+"', ");
-								query3.append("severity ='"+cve_sv+"', ");
+								query2.append("'"+cveSev+"', ");
+								query3.append("severity ='"+cveSev+"', ");
 								
 							}
 							else {
 								//nothing to do
 							}
 							query1.append("`desc`) ");
-							query2.append("'"+cve_dd+"') ");
-							query3.append("`desc` ='"+cve_dd+"';");
+							query2.append("'"+cveDesc+"') ");
+							query3.append("`desc` ='"+cveDesc+"';");
 							
 							
 							
@@ -376,7 +376,7 @@ public class DBUploader {
 	 * 			If IsNewYear is true, this method create new table referenced by newyear
 	 * @throws	Exception
 	 */
-	public void upload_refs_modified (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
+	public void uploadModifiedRefs (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
 		System.out.println(" ");
 		if(fpath.isEmpty()) {
 			System.out.println(" File_refs_modified path is empty.");
@@ -397,36 +397,36 @@ public class DBUploader {
 					// Load translated modified file.
 					
 					// make node list.
-					NodeList nList = make_nodelist(inputFile);
+					NodeList nList = makeNodeList(inputFile);
 					if(IsNewYear) {
-						create_refs(conn, newyear+"_refs",newyear+"_base");
+						createRefs(conn, newyear+"_refs",newyear+"_base");
 					}
 					else {
 						//nothing to do
 					}
-					drop_table(conn, "modified_refs");
-					create_refs(conn, "modified_refs", "modified_base");
-					load_xml_to_table(conn, "modified_refs");
-					String prev_name = "";
+					dropTable(conn, "modified_refs");
+					createRefs(conn, "modified_refs", "modified_base");
+					loadXmltoTable(conn, "modified_refs");
+					String prevName = "";
 					int procrate = 5;
 					for (int temp = 0; temp < nList.getLength(); temp++) {
 						// parse year of CVE
-						Element cve_name = (Element) nList.item(temp);
-						String cve_n = cve_name.getAttribute("name");
-						String cve_s = cve_name.getAttribute("source");
-						String cve_uu = cve_name.getAttribute("url");
-						String cve_u = cve_uu.replace("'","\\'");
-						if (cve_n.isEmpty()) {
+						Element cveEntry = (Element) nList.item(temp);
+						String cveName = cveEntry.getAttribute("name");
+						String cveSource = cveEntry.getAttribute("source");
+						String cveTemp = cveEntry.getAttribute("url");
+						String cveUrl = cveTemp.replace("'","\\'");
+						if (cveName.isEmpty()) {
 							System.out.println(" There is no name of CVE (refs_modified)\n" + fpath);
 						}
-						else if (cve_s.isEmpty()) {
-							System.out.println(" There is no source of CVE (refs_modified)\n" + fpath + ", " + cve_n);
+						else if (cveSource.isEmpty()) {
+							System.out.println(" There is no source of CVE (refs_modified)\n" + fpath + ", " + cveName);
 						}
-						else if (cve_u.isEmpty()) {
-							System.out.println(" There is no url of CVE (refs_modified)\n" + fpath + ", " + cve_n);
+						else if (cveUrl.isEmpty()) {
+							System.out.println(" There is no url of CVE (refs_modified)\n" + fpath + ", " + cveName);
 						}
 						else {
-							String parser1 = cve_n.split("-")[1];
+							String parser1 = cveName.split("-")[1];
 							int parsint = Integer.parseInt(parser1);
 							if (parsint < 2002) {
 								parser1 = "2002";
@@ -435,9 +435,9 @@ public class DBUploader {
 								// nothing to do
 							}
 							
-							if (!prev_name.equals(cve_n)) {
-								deleteData(conn, parser1+"_refs", cve_n);
-								prev_name = cve_n;
+							if (!prevName.equals(cveName)) {
+								deleteData(conn, parser1+"_refs", cveName);
+								prevName = cveName;
 							}
 							else {
 								// nothing to do
@@ -446,7 +446,7 @@ public class DBUploader {
 							String refsInsertQuery = "INSERT INTO ? " +
 									"(name, source, url) " +
 									"VALUES (?,?,?); ";
-							String[] input = {parser1+"_refs ",cve_n, cve_s, cve_u};
+							String[] input = {parser1+"_refs ",cveName, cveSource, cveUrl};
 							try {
 								nvdQuery(conn, refsInsertQuery, input);
 							} catch (Exception e) {
@@ -497,7 +497,7 @@ public class DBUploader {
 	 * 			If IsNewYear is true, this method create new table referenced by newyear
 	 * @throws	Exception
 	 */
-	public void upload_vuln_modified (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
+	public void uploadModifiedVuln (Connection conn, String fpath, boolean IsNewYear, int newyear) throws Exception {
 		System.out.println(" ");
 		if(fpath.isEmpty()) {
 			System.out.println(" File_vuln_modified path is empty.");
@@ -518,38 +518,38 @@ public class DBUploader {
 					// Load translated modified file.
 					
 					// make node list.
-					NodeList nList = make_nodelist(inputFile);
+					NodeList nList = makeNodeList(inputFile);
 					if(IsNewYear) {
-						create_vuln(conn, newyear+"_vuln", newyear+"_base");
+						createVuln(conn, newyear+"_vuln", newyear+"_base");
 					}
 					else {
 						//nothing to do
 					}
-					drop_table(conn, "modified_vuln");
-					create_vuln(conn, "modified_vuln", "modified_base");
-					load_xml_to_table(conn, "modified_vuln");
-					String prev_name = "";
+					dropTable(conn, "modified_vuln");
+					createVuln(conn, "modified_vuln", "modified_base");
+					loadXmltoTable(conn, "modified_vuln");
+					String prevName = "";
 					int procrate = 5;
 					for (int temp = 0; temp < nList.getLength(); temp++) {
 						// parse year of CVE
-						Element cve_name = (Element) nList.item(temp);
-						String cve_n = cve_name.getAttribute("name");
-						String cve_p = cve_name.getAttribute("prodname");
-						String cve_pp = cve_p.replace("'", "\\'");
-						String cve_v = cve_name.getAttribute("vendor");
-						String cve_num = cve_name.getAttribute("num");
-						String cve_e = cve_name.getAttribute("edition");
-						if (cve_n.isEmpty()) {
+						Element cveEntry = (Element) nList.item(temp);
+						String cveName = cveEntry.getAttribute("name");
+						String cveTemp = cveEntry.getAttribute("prodname");
+						String cveProd = cveTemp.replace("'", "\\'");
+						String cveVen = cveEntry.getAttribute("vendor");
+						String cveNum = cveEntry.getAttribute("num");
+						String cveEdi = cveEntry.getAttribute("edition");
+						if (cveName.isEmpty()) {
 							System.out.println(" There is no name of CVE (vuln_modified)\n" + fpath);
 						}
-						else if (cve_pp.isEmpty()) {
-							System.out.println(" There is no prodname of CVE (vuln_modified)\n" + fpath + ", " + cve_n);
+						else if (cveProd.isEmpty()) {
+							System.out.println(" There is no prodname of CVE (vuln_modified)\n" + fpath + ", " + cveName);
 						}
-						else if (cve_v.isEmpty()) {
-							System.out.println(" There is no vendor of CVE (vuln_modified)\n" + fpath + ", " + cve_n);
+						else if (cveVen.isEmpty()) {
+							System.out.println(" There is no vendor of CVE (vuln_modified)\n" + fpath + ", " + cveName);
 						}
 						else {
-							String parser1 = cve_n.split("-")[1];
+							String parser1 = cveName.split("-")[1];
 							StringBuffer query = new StringBuffer();
 							StringBuffer query2 = new StringBuffer();
 							
@@ -560,25 +560,25 @@ public class DBUploader {
 							else {
 								// nothing to do
 							}
-							if (!prev_name.equals(cve_n)) {
-								deleteData(conn, parser1+"_vuln", cve_n);
-								prev_name = cve_n;
+							if (!prevName.equals(cveName)) {
+								deleteData(conn, parser1+"_vuln", cveName);
+								prevName = cveName;
 							}
 							else {
 								// nothing to do
 							}
 							query.append("INSERT INTO "+parser1+"_vuln " +
 									"(name, prodname, vendor");
-							query2.append("VALUES ('"+cve_n+"','"+cve_pp+"','"+cve_v+"'");
+							query2.append("VALUES ('"+cveName+"','"+cveProd+"','"+cveVen+"'");
 							
-							if (!cve_num.isEmpty()) {
+							if (!cveNum.isEmpty()) {
 								query.append(", num");
-								query2.append(", '"+cve_num+"'");
+								query2.append(", '"+cveNum+"'");
 								
 							}
-							if (!cve_e.isEmpty()) {
+							if (!cveEdi.isEmpty()) {
 								query.append(", edition");
-								query2.append(", '"+cve_e+"'");
+								query2.append(", '"+cveEdi+"'");
 								
 							}
 							else {
@@ -614,27 +614,27 @@ public class DBUploader {
 	 * @brief	make testing table on nvd database
 	 */
 	}
-	public void set_testing_table (Connection conn) throws Exception{
+	public void setTestingTable (Connection conn) throws Exception{
 		
 		try {
 			setForeignKey(conn, 0);
-			drop_table(conn, "2999_base");
-			create_base(conn, "2999_base");
-			drop_table(conn, "test_modified_base");
-			create_base(conn, "test_modified_base");
+			dropTable(conn, "2999_base");
+			createBase(conn, "2999_base");
+			dropTable(conn, "test_modified_base");
+			createBase(conn, "test_modified_base");
 			setForeignKey(conn, 1);
 			
-			drop_table(conn, "2999_refs");
-			drop_table(conn, "2999_vuln");
+			dropTable(conn, "2999_refs");
+			dropTable(conn, "2999_vuln");
 			
-			drop_table(conn, "test_modified_refs");
-			drop_table(conn, "test_modified_vuln");
+			dropTable(conn, "test_modified_refs");
+			dropTable(conn, "test_modified_vuln");
 			
-			create_refs(conn, "2999_refs","2999_base");
-			create_vuln(conn, "2999_vuln","2999_base");
+			createRefs(conn, "2999_refs","2999_base");
+			createVuln(conn, "2999_vuln","2999_base");
 			
-			create_refs(conn, "test_modified_refs", "test_modified_base");
-			create_vuln(conn, "test_modified_vuln", "test_modified_base");
+			createRefs(conn, "test_modified_refs", "test_modified_base");
+			createVuln(conn, "test_modified_vuln", "test_modified_base");
 			String baseInsertQuery = "INSERT INTO 2999_base VALUES ('CVE-2999-9999', '2999-9999', 'CVE', '2018-10-29', '2018-10-29', '(AV:N/AC:L/Au:N/C:P/I:P/A:P)', 10, 10, 10, 2, 'High', 'Test Description (MySQL)')";
 			String refsInsertQuery = "INSERT INTO 2999_refs VALUES ('CVE-2999-9999', 'TESTSRC', 'https://tde.sktelecom.com')";
 			String vulnInsertQuery = "INSERT INTO 2999_vuln VALUES ('CVE-2999-9999', 'Testprod', 'Testvendor', 'Testnum', 'Testedition')";
@@ -662,7 +662,7 @@ public class DBUploader {
 		}
 	}
 	
-	public void create_base (Connection conn, String n_table) throws Exception{
+	public void createBase (Connection conn, String nTable) throws Exception{
 		String createQuery = "CREATE TABLE ?(\n" +
 			    "name char(20) not null unique,\n" +
 			    "seq text,\n" +
@@ -678,11 +678,11 @@ public class DBUploader {
 			    "`desc` mediumtext\n" +
 			    
 			    ") ";
-		String input[] = {n_table};
+		String input[] = {nTable};
 		nvdQuery(conn, createQuery, input);
 	}
 	
-	public void create_refs(Connection conn, String n_table, String base_table) throws Exception {
+	public void createRefs(Connection conn, String nTable, String baseTable) throws Exception {
 		String createQuery = "CREATE TABLE ?(\n" 
 				+ "name char(20) not null,\n"
 				+ "source text, \n"
@@ -691,28 +691,28 @@ public class DBUploader {
 				+ "foreign key(name) references "
 				+ "?(name)\n"
 				+ "	on delete cascade)";
-		String input[] = {n_table, base_table};
+		String input[] = {nTable, baseTable};
 		nvdQuery(conn, createQuery, input);
 	}
 	
-	public void create_vuln (Connection conn, String n_table, String base_table) throws Exception{
+	public void createVuln (Connection conn, String nTable, String baseTable) throws Exception{
 		String createQuery = "CREATE TABLE ?(\n" + "name char(20) not null,\n" + "prodname text, \n"
 				+ "vendor text, \n" + "num text, \n" + "edition text, \n" 
 				+ "foreign key(name) references " + "?(name)\n" + "	on delete cascade)";
-		String input[] = {n_table, base_table};
+		String input[] = {nTable, baseTable};
 		nvdQuery(conn, createQuery, input);
 	}
 	
-	public void load_xml_to_table (Connection conn, String n_table) throws Exception{
-		String loadQuery = "LOAD XML LOCAL INFILE './"+ZipTagXml.translated+"/nvdcve-"+n_table+".xml'\n" +
-				"INTO TABLE "+n_table+"\n" +
+	public void loadXmltoTable (Connection conn, String nTable) throws Exception{
+		String loadQuery = "LOAD XML LOCAL INFILE './"+ZipTagXml.translated+"/nvdcve-"+nTable+".xml'\n" +
+				"INTO TABLE "+nTable+"\n" +
 				"ROWS IDENTIFIED BY '<entry>';";
 		nvdQuery(conn, loadQuery, null);
 		
 	} 
 	
-	public void drop_table (Connection conn, String n_table) throws Exception {
-		String dropQuery = "drop table if exists "+n_table;
+	public void dropTable (Connection conn, String nTable) throws Exception {
+		String dropQuery = "drop table if exists "+nTable;
 		nvdQuery(conn, dropQuery, null);
 	}
 	
@@ -722,17 +722,17 @@ public class DBUploader {
 		nvdQuery(conn, deleteQuery, input);
 	}
 	
-	public Connection connect_to_DB(Connection conn) throws Exception{
+	public Connection connectToDB(Connection conn) throws Exception{
 		
 		try {
 			if (conn == null) {
 				Class.forName("com.mysql.cj.jdbc.Driver");
-				conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.db_id, ZipTagXml.db_pw);
+				conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.dbId, ZipTagXml.dbPw);
 				
 			} else {
 				if (conn.isClosed()) {
 					Class.forName("com.mysql.cj.jdbc.Driver");
-					conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.db_id, ZipTagXml.db_pw);
+					conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.dbId, ZipTagXml.dbPw);
 					
 				} else {
 					System.out.println(" Connection already exists");
@@ -746,7 +746,7 @@ public class DBUploader {
 		} 
 	}
 	
-	public void disconnect_DB(Connection conn) throws Exception {
+	public void disconnectDB(Connection conn) throws Exception {
 		try {
 			if(!conn.isClosed() && conn != null) {
 				conn.close();
@@ -757,7 +757,7 @@ public class DBUploader {
 		}
 	}
 	
-	public NodeList make_nodelist(File inputFile) throws Exception {
+	public NodeList makeNodeList(File inputFile) throws Exception {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		try {
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();

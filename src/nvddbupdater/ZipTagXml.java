@@ -44,21 +44,21 @@ public class ZipTagXml {
 		/// DB server information
 		static String host = "113.217.254.196";  
 		static String port = "3306";             
-		static String db_id = "sktelecom";       
-		static String db_pw = "sktelecom";       
+		static String dbId = "sktelecom";       
+		static String dbPw = "sktelecom";       
 
 		/**
 		 * @brief	Encode document in UTF-8 and save it by .xml file
 		 * @param	document
 		 * 			type: Document
 		 * 			Unencoded document
-		 * @param	out_xml_dest
+		 * @param	outXmlDest
 		 * 			type: String
 		 * 			File path of .xml file
 		 * @throws	IOException
 		 * @throws	TransformerException
 		 */
-		void transforming(Document document, String out_xml_dest) throws IOException, TransformerException
+		void transforming(Document document, String outXmlDest) throws IOException, TransformerException
 		{
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 	 		
@@ -75,7 +75,7 @@ public class ZipTagXml {
 			
 			String finalString = new String(out.toByteArray(), StandardCharsets.UTF_8);
 			 
-			File finalFile = new File(out_xml_dest);
+			File finalFile = new File(outXmlDest);
 			FileWriter filewriter = new FileWriter(finalFile);
 			try {
 				filewriter.write(finalString);
@@ -96,13 +96,13 @@ public class ZipTagXml {
 		 * @param	parent
 		 * 			type: Element
 		 * 			Element of _base, _refs or _vuln file
-		 * @param	tag_name
+		 * @param	tagName
 		 * 			type: String
 		 * 			The name of attribute on nNode
 		 */
-		void set_tag (Element nNode, Element parent, String tag_name) {
-			String temp = nNode.getAttribute(tag_name); // tag contents
-			parent.setAttribute(tag_name, temp);
+		void setTag (Element nNode, Element parent, String tagName) {
+			String temp = nNode.getAttribute(tagName); // tag contents
+			parent.setAttribute(tagName, temp);
 		}
 		
 		/**
@@ -117,7 +117,7 @@ public class ZipTagXml {
 		 * 			type: String
 		 * 			The name of attribute on parent
 		 */
-		void set_tag_fromtext (Element nNode, Element parent, String tag_name) {
+		void setTagfromText (Element nNode, Element parent, String tag_name) {
 			String temp = nNode.getTextContent(); // tag contents
 			parent.setAttribute(tag_name, temp);
 		}
@@ -131,18 +131,18 @@ public class ZipTagXml {
 		 * 			type: Element
 		 * 			Element of _base file
 		 */
-		void set_all_tag (Element nNode, Element parent) {
-			this.set_tag(nNode, parent, "modified");
-			this.set_tag(nNode, parent, "published");
-			this.set_tag(nNode, parent, "seq");
-			this.set_tag(nNode, parent, "name");
-			this.set_tag(nNode, parent, "type");
-			this.set_tag(nNode, parent, "CVSS_vector");
-			this.set_tag(nNode, parent, "CVSS_exploit_subscore");
-			this.set_tag(nNode, parent, "CVSS_impact_subscore");
-			this.set_tag(nNode, parent, "CVSS_base_score");
-			this.set_tag(nNode, parent, "CVSS_version");
-			this.set_tag(nNode, parent, "severity");
+		void setTagAll (Element nNode, Element parent) {
+			this.setTag(nNode, parent, "modified");
+			this.setTag(nNode, parent, "published");
+			this.setTag(nNode, parent, "seq");
+			this.setTag(nNode, parent, "name");
+			this.setTag(nNode, parent, "type");
+			this.setTag(nNode, parent, "CVSS_vector");
+			this.setTag(nNode, parent, "CVSS_exploit_subscore");
+			this.setTag(nNode, parent, "CVSS_impact_subscore");
+			this.setTag(nNode, parent, "CVSS_base_score");
+			this.setTag(nNode, parent, "CVSS_version");
+			this.setTag(nNode, parent, "severity");
 		
 		}
 		
@@ -150,7 +150,7 @@ public class ZipTagXml {
 		 * @brief	Check the necessary directories exist
 		 * @return	true: if all directories exist, false: if any one directory does not exist
 		 */
-		boolean dir_exist() {
+		boolean dirExist() {
 			File nvdcve = new File("./"+ZipTagXml.nvdcve);
 			File original = new File("./"+ZipTagXml.original);
 			File translated =new File("./"+ZipTagXml.translated);
@@ -171,7 +171,7 @@ public class ZipTagXml {
 		/**
 		 * @brief	Make all necessary directories
 		 */
-		void make_dir () {
+		void makeDir () {
 			File nvdcve = new File("./"+ZipTagXml.nvdcve);
 			File original = new File("./"+ZipTagXml.original);
 			File translated =new File("./"+ZipTagXml.translated);
@@ -239,10 +239,10 @@ public class ZipTagXml {
 		 * @throws IOException 
 		 */
 		void unzip(String zipFilePath, String destDir) throws IOException {
-	        File dir = new File(destDir);
+	        File targetDir = new File(destDir);
 	        // create output directory if it doesn't exist
-	        if(!dir.exists()) {
-	        	if(dir.mkdirs()) {
+	        if(!targetDir.exists()) {
+	        	if(targetDir.mkdirs()) {
 	        		System.out.println(" "+destDir + " is successfully created.");
 	        	}
 	        	else {
@@ -250,49 +250,49 @@ public class ZipTagXml {
 	        		System.exit(1);
 	        	}
 	        }
-	        FileInputStream fis = null;
-	        ZipInputStream zis = null;
-	        FileOutputStream fos = null;
+	        FileInputStream fileStream = null;
+	        ZipInputStream zipFiles = null;
+	        FileOutputStream outputStream = null;
 	        //buffer for read and write data to file
 	        byte[] buffer = new byte[1024];
 	        try {
-	            fis = new FileInputStream(zipFilePath);
+	            fileStream = new FileInputStream(zipFilePath);
 	            try {
-	            	zis = new ZipInputStream(fis);
-		            ZipEntry ze = zis.getNextEntry();
-		            while(ze != null){
-		                String fileName = ze.getName();
+	            	zipFiles = new ZipInputStream(fileStream);
+		            ZipEntry entries = zipFiles.getNextEntry();
+		            while(entries != null){
+		                String fileName = entries.getName();
 		                File newFile = new File(destDir + File.separator + fileName);
 		                 //create directories for sub directories in zip
 		                new File(newFile.getParent()).mkdirs();
 		                try {
-			                fos = new FileOutputStream(newFile);
+			                outputStream = new FileOutputStream(newFile);
 			                int len;
-			                while ((len = zis.read(buffer)) > 0) {
-			                	fos.write(buffer, 0, len);
+			                while ((len = zipFiles.read(buffer)) > 0) {
+			                	outputStream.write(buffer, 0, len);
 			                }
 		                } catch (Exception e) {
 		                	System.out.println(" FileOutputStream error");
 		                } finally {
-		                	fos.close();
+		                	outputStream.close();
 		                }
 		                
 		                //close this ZipEntry
-		                zis.closeEntry();
-		                ze = zis.getNextEntry();
+		                zipFiles.closeEntry();
+		                entries = zipFiles.getNextEntry();
 		            } 
-		            zis.closeEntry();
+		            zipFiles.closeEntry();
 		            } catch (Exception e) {
 		            	
 		            } finally {
 		            	
-		        		zis.close();
+		        		zipFiles.close();
 		            }
 	            //close last ZipEntry
 	        } catch (IOException e) {
 	        	System.out.println(" "+zipFilePath + "unzip failed");
 	        } finally {
-	        	fis.close();
+	        	fileStream.close();
 	        }
 	        
 	    }
