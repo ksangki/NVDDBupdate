@@ -101,17 +101,11 @@ public class DBUploader {
 			parser2 = parser1.split("_")[0];
 			String nTable = parser2+baseType;
 			try {
-				
 				setForeignKey(conn, 0);
-				
 				dropTable(conn, nTable);
-				
 				createBase(conn, nTable);
-				
 				loadXmltoTable(conn, nTable);
-				
 				setForeignKey(conn, 1);
-				
 				logwriter.writeConsole(" DROP and CREATE base "+parser2);
 			}
 			catch (Exception e) {
@@ -457,10 +451,10 @@ public class DBUploader {
 							// nothing to do
 						}
 						
-						String refsInsertQuery = "INSERT INTO ? " +
+						String refsInsertQuery = "INSERT INTO " + parser1+refsType+
 								"(name, source, url) " +
 								"VALUES (?,?,?); ";
-						String[] input = {parser1+"_refs ",cveName, cveSource, cveUrl};
+						String[] input = {cveName, cveSource, cveUrl};
 						try {
 							nvdQuery(conn, refsInsertQuery, input);
 						} catch (Exception e) {
@@ -674,7 +668,8 @@ public class DBUploader {
 	}
 	
 	public void createBase (Connection conn, String nTable) throws Exception{
-		String createQuery = "CREATE TABLE ?(\n name char(20) not null unique,\n seq text,\n" +
+		String createQuery = "CREATE TABLE "+nTable+
+				"(\n name char(20) not null unique,\n seq text,\n" +
 			    "type text,\n" +
 			    "published date not null,\n" +
 			    "modified date not null,\n" +
@@ -687,27 +682,29 @@ public class DBUploader {
 			    "`desc` mediumtext\n" +
 			    
 			    ") ";
-		String[] input = {nTable};
-		nvdQuery(conn, createQuery, input);
+		
+		nvdQuery(conn, createQuery, null);
 	}
 	
 	public void createRefs(Connection conn, String nTable, String baseTable) throws Exception {
-		String createQuery = "CREATE TABLE ?(\n name char(20) not null,\n source text, \n"
+		String createQuery = "CREATE TABLE "+nTable
+				+ "(\n name char(20) not null,\n source text, \n"
 				+ "url text, \n"
 				
 				+ "foreign key(name) references "
-				+ "?(name)\n"
+				+ baseTable
+				+ "(name)\n"
 				+ "	on delete cascade)";
-		String[] input = {nTable, baseTable};
-		nvdQuery(conn, createQuery, input);
+		
+		nvdQuery(conn, createQuery, null);
 	}
 	
 	public void createVuln (Connection conn, String nTable, String baseTable) throws Exception{
-		String createQuery = "CREATE TABLE ?(\n name char(20) not null,\n prodname text, \n"
+		String createQuery = "CREATE TABLE "+nTable+"(\n name char(20) not null,\n prodname text, \n"
 				+ "vendor text, \n" + "num text, \n" + "edition text, \n" 
-				+ "foreign key(name) references " + "?(name)\n" + "	on delete cascade)";
-		String[] input = {nTable, baseTable};
-		nvdQuery(conn, createQuery, input);
+				+ "foreign key(name) references " + baseTable+"(name)\n" + "	on delete cascade)";
+		
+		nvdQuery(conn, createQuery, null);
 	}
 	
 	public void loadXmltoTable (Connection conn, String nTable) throws Exception{
@@ -724,8 +721,8 @@ public class DBUploader {
 	}
 	
 	public void deleteData(Connection conn, String nTable, String nData) throws Exception{
-		String deleteQuery = "DELETE FROM ? WHERE name= ?;";
-		String[] input = {nTable, nData};
+		String deleteQuery = "DELETE FROM "+nTable+" WHERE name= ?;";
+		String[] input = {nData};
 		nvdQuery(conn, deleteQuery, input);
 	}
 	
@@ -776,7 +773,7 @@ public class DBUploader {
 				}
 			}
 			
-			queryCreate.execute();
+			queryCreate.executeUpdate();
 		} catch (Exception e) {
 			logwriter.writeConsole(" Query Error!");
 			throw e;
