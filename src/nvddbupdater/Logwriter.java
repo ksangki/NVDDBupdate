@@ -40,5 +40,6 @@ public class Logwriter {
 	
 	public void writeConsole(String logstring) {
 		System.out.println(logstring);
+		System.out.println(logstring);
 	}
 }
