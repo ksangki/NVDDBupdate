@@ -5,18 +5,23 @@
  * @brief	Make NVD DB tables and update
  * @date
  * 	- 2018. 11. 02	Joh Rang Hyun
+ * 	- 2018. 12.	14	Joh Rang Hyun	StAX version
  */
 
 
 package nvddbupdater;
 
-
+import java.io.IOException;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Scanner;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import org.xml.sax.SAXException;
 
 /**
  * @class	Main
@@ -25,10 +30,11 @@ import java.util.Scanner;
  */
 public class Main {
 	static ZipTagXml ztx = new ZipTagXml();
-	static Logwriter logwriter = new Logwriter();
+	
 	static String nLogFile = "/log.txt";
 	static String pLog = "./"+ZipTagXml.log+nLogFile;
 	static String logError = " Cannot write log.";
+	static String nvdPrefix = "/nvdcve-";
 	/**
 	 * @brief	Main process
 	 * @param	args
@@ -36,6 +42,7 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		int executeOption = 1;
+		Logwriter.logger.addHandler(Logwriter.getHandler());
 		if(args.length > 0) {
 			if(args[0] == "1") {
 				executeOption = 1;
@@ -51,40 +58,40 @@ public class Main {
 		/// If Option is 2, skip the initialization and run update thread
 		
 			Scanner inputLine = new Scanner(System.in);
-			logwriter.writeConsole(" ________________________________________________\n" +
+			Logwriter.writeConsole(" ________________________________________________\n" +
 					           "| NVD DB Update                                  |\n" +
 					           "| 1. Initialize all tables and update new tables |\n" +
 					           "| 2. Update only modified data                   |\n" +
 					           "| 3. Testing                                     |\n" +
 					           "|________________________________________________|\n");
-			System.out.print(" Choose number: ");
+			Logwriter.writeConsole(" Choose number: ");
 			String msg = inputLine.nextLine();
 			
 			try {
 				executeOption = Integer.parseInt(msg);
 				if (executeOption == 1) {
-					logwriter.writeConsole(" Initialize all tables ");
+					Logwriter.writeConsole(" Initialize all tables\n");
 				}
 				else if (executeOption == 2) {
 					if (!ztx.dirExist()) {
-						logwriter.writeConsole(" There is no directory. Please intialize all tables first.");
+						Logwriter.writeConsole(" There is no directory. Please intialize all tables first.\n");
 						inputLine.close();
 						System.exit(1);
 					}
 					else {
-						System.out.print(" If you do not update for long time from last update, you may not be able to update all data modified before. \n" +
+						Logwriter.writeConsole(" If you do not update for long time from last update, you may not be able to update all data modified before. \n" +
 					                       " Start only update anyway? : (y/n) ");
 						msg = inputLine.nextLine();
 						if (msg.equals("y")||msg.equals("Y")) {
 							// nothing to do
 						}
 						else if (msg.equals("n")||msg.equals("N")) {
-							logwriter.writeConsole(" Stop ");
+							Logwriter.writeConsole(" Stop\n");
 							inputLine.close();
 							System.exit(1);
 						}
 						else {
-							logwriter.writeConsole(" Wrong input: " + msg);
+							Logwriter.writeConsole(" Wrong input: " + msg+"\n");
 							inputLine.close();
 							System.exit(1);
 						}
@@ -93,7 +100,7 @@ public class Main {
 				}
 				else if(executeOption == 3) {
 					if (!ztx.dirExist()) {
-						logwriter.writeConsole(" There is no directory. Please intialize all tables first.");
+						Logwriter.writeConsole(" There is no directory. Please intialize all tables first.\n");
 						inputLine.close();
 						System.exit(1);
 					}
@@ -102,12 +109,12 @@ public class Main {
 					}
 				}
 				else {
-					logwriter.writeConsole(" You choose wrong one: " + executeOption);
+					Logwriter.writeConsole(" You choose wrong one: " + executeOption+"\n");
 					inputLine.close();
 					System.exit(1);
 				}
 			} catch (Exception e) {
-				logwriter.writeConsole(" You choose wrong one: " + msg);
+				Logwriter.writeConsole(" You choose wrong one: " + msg+"\n");
 				inputLine.close();
 				System.exit(1);
 			} finally {
@@ -124,15 +131,15 @@ public class Main {
 				initNSet();
 				runUpdateThread(false);
 			} catch (Exception e) {
-				logwriter.writeConsole(" Initialization failed");
+				Logwriter.writeConsole(" Initialization failed\n"+e);
 			} finally {
-				logwriter.writeConsole(" ...");
+				Logwriter.writeConsole(" ...");
 			}
 			/// Update CVEs using modified files
 		}
 		else if(executeOption == 2) {
-			logwriter.writeConsole(" ");
-			logwriter.writeConsole(" Start Update only");
+			Logwriter.writeConsole(" \n");
+			Logwriter.writeConsole(" Start Update only\n");
 			/// Update CVEs using modified files
 			
 			runUpdateThread(false);
@@ -140,60 +147,76 @@ public class Main {
 		}
 		else if(executeOption == 3) {
 			/// Testing
-			logwriter.writeConsole(" ");
-			logwriter.writeConsole(" Start Testing");
+			Logwriter.writeConsole(" \n");
+			Logwriter.writeConsole(" Start Testing\n");
 			
 			runUpdateThread(true);
 			
 			
 		}
 		else {
-			logwriter.writeConsole(" ");
-			logwriter.writeConsole(" Error!");
+			Logwriter.writeConsole(" \n");
+			Logwriter.writeConsole(" Error!\n");
 		}
 		
 	}
 	
-
 	/**
 	 * @brief	Drop all tables on NVD DB and upload new data from NVD data feed
-	 * @throws	Exception
+	 * @throws	IOException
+	 * @throws	SQLException
 	 */
-	private static void initNSet () throws Exception {
+	private static void initNSet () throws IOException, SQLException {
 		Date date = new Date();
 		DBUploader uploaderDB = new DBUploader();
 		
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		int thisyear = Calendar.getInstance().get(Calendar.YEAR);
+//		int thisyear = 2002;
 		ztx.makeDir();
-		if(!writeFileLog(pLog,dateFormat.format(date) +" Start initializing NVD.")) {
-			throw new Exception();
+		if(!writeFileLog(pLog,dateFormat.format(date) +" Start initializing NVD.\n")) {
+			throw new IOException();
 		}
 		
-		logwriter.writeConsole(" ");
-		logwriter.writeConsole(" "+dateFormat.format(date) +" Start initializing NVD.");
-		
+		Logwriter.writeConsole(" \n");
+		Logwriter.writeConsole(" "+dateFormat.format(date) +" Start initializing NVD.\n");
+		Logwriter.writeConsole(" \n");
 		for(int i = 2002; i <= thisyear; i++) {
 			try {
-				GetData.getData("nvdcve-"+i+".xml.zip");
-				GetData.makeTranslatedFile("nvdcve-"+i);
-			} catch (Exception e) {
+				//GetData.getData("nvdcve-"+i+".xml.zip");
+				GetData.getData("nvdcve-1.1-"+i+".json.zip");
+				
+			} catch (IOException e) {
 				date = new Date();
-				writeFileLog(pLog,dateFormat.format(date) +" Get_data for initialization failed.");
-				logwriter.writeConsole(" "+dateFormat.format(date) + " Get_Data for initialization failed.");
-				logwriter.writeConsole(" ");
+				writeFileLog(pLog,dateFormat.format(date) +" getData for initialization failed.\n");
+				Logwriter.writeConsole(" "+dateFormat.format(date) + " getData for initialization failed.\n");
+				Logwriter.writeConsole(" \n");
 				throw e;
 			}
 		}
-		logwriter.writeConsole(" ");
+		Logwriter.writeConsole(" \n");
+		Logwriter.writeConsole(" here");
+		for(int i = 2002; i <= thisyear; i++) {
+			Logwriter.writeConsole(" here");
+			if (GetData.makeTranslatedFile("nvdcve-"+i)) {
+				Logwriter.writeConsole(" Success Translate nvdcve-"+i+" to nvdcve-"+i+" base, refs, vuln file.\n");
+			} else {
+				date = new Date();
+				writeFileLog(pLog,dateFormat.format(date) +" makeTranslatedFile for initialization failed.\n");
+				Logwriter.writeConsole(" "+dateFormat.format(date) + " makeTranslatedFile for initialization failed.\n");
+				Logwriter.writeConsole(" \n");
+				System.exit(1);
+			}
+		}
+		Logwriter.writeConsole(" \n");
 		
 		try {	
 			Connection conn = uploaderDB.connectToDB();
 		
 			for(int i = 2002; i <= thisyear ; i++) {
-				uploaderDB.initNUploadBase(conn,"./"+ZipTagXml.translated+"/nvdcve-"+i+"_base.xml");
-				uploaderDB.initNUploadRefs(conn,"./"+ZipTagXml.translated+"/nvdcve-"+i+"_refs.xml");
-				uploaderDB.initNUploadVuln(conn,"./"+ZipTagXml.translated+"/nvdcve-"+i+"_vuln.xml");
+				uploaderDB.initNUploadBase(conn,"./"+ZipTagXml.translated+nvdPrefix+i+"_base.xml");
+				uploaderDB.initNUploadRefs(conn,"./"+ZipTagXml.translated+nvdPrefix+i+"_refs.xml");
+				uploaderDB.initNUploadVuln(conn,"./"+ZipTagXml.translated+nvdPrefix+i+"_vuln.xml");
 				
 			}
 			uploaderDB.setTestingTable(conn);
@@ -201,21 +224,24 @@ public class Main {
 			date = new Date();
 			writeFileLog(pLog,dateFormat.format(date) +" All NVD tables are Dropped and created.");
 			
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			date = new Date();
-			writeFileLog(pLog,dateFormat.format(date) +" Get_data for initialization failed.");
+			writeFileLog(pLog,dateFormat.format(date) +" Cannot connect to DB.");
 			throw e;
-		}
+		} 
 		
-		logwriter.writeConsole(" "+dateFormat.format(date) + " All NVD tables are Dropped and created.");
-		logwriter.writeConsole(" ");
+		Logwriter.writeConsole(" "+dateFormat.format(date) + " All NVD tables are Dropped and created.\n");
+		Logwriter.writeConsole(" \n");
 
 	}
 
 
+	
 	/**
 	 * @brief	Make new update thread and run it. This Thread will run every 4 a.m. If you want to change the time, edit the variable 'update_time_24'
-	 * @throws	Exception
+	 * @param	test
+	 * 			type: boolean
+	 * 			true if this process is executed for test. if not, false
 	 */
 	private static void runUpdateThread (boolean test) {
 		DateFormat sDataform = new SimpleDateFormat("yyyy/MM/dd");
@@ -224,71 +250,77 @@ public class Main {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		final long minute = (long) 60000; // 1 minute
 		final long timeInterval = 24*60*minute;	// 1 day
-		Runnable runnable = new Runnable() {
-	
-			public void run() {
-				Calendar timeIndicator = Calendar.getInstance();
-				
-				Date date = null;
-				int lastyear = timeIndicator.get(Calendar.YEAR);
-				int newyear = 0;
-				int updateTime24 = 4; // the time when update begin. if update_time_24 = 4, it starts at 4am. if update_time_24 = 18, it starts at 6pm.
-				int anHour = 3600000;
-				while (!Thread.currentThread().isInterrupted()) {
+		new Thread(()->{
+			Calendar timeIndicator = Calendar.getInstance();
+			
+			Date date = null;
+			int lastyear = timeIndicator.get(Calendar.YEAR);
+			int newyear = 0;
+			int updateTime24 = 4; // the time when update begin. if update_time_24 = 4, it starts at 4am. if update_time_24 = 18, it starts at 6pm.
+			int anHour = 3600000;
+			while (!Thread.currentThread().isInterrupted()) {
 
-					try {
-						newyear = Calendar.getInstance().get(Calendar.YEAR);
-						updaterDB.update(lastyear,newyear,test);						
-					} catch (Exception e) {
-						logwriter.writeConsole(" Cannot update modified data.");
-						date = new Date();
-						writeFileLog(pLog,dateFormat.format(date) +" Update failed. (Update DB failed)");
-						Thread.currentThread().interrupt();
-					}
-					try {
-						lastyear = newyear;
-						timeIndicator = Calendar.getInstance();
-						Date date2 = timeIndicator.getTime();
-						try {
-							timeIndicator.setTime(sDataform.parse(sDataform.format(date2)));
-						} catch (Exception e) {
-							date = new Date();
-							writeFileLog(pLog,dateFormat.format(date) +" Thread could not sleep. (Failed to set time)");
-							Thread.currentThread().interrupt();
-						}
-						date2 = timeIndicator.getTime();
-						Date date3 = new Date();
-						
-						logwriter.writeConsole(" Updater sleeps.");
-						if (!test) {
-							logwriter.writeConsole(" Updater will run at "+updateTime24+":00\n");
-							Thread.sleep(timeInterval-(date3.getTime()-date2.getTime())+updateTime24*anHour); // thread will awake at midnight(04:00)
-						} else {
-							logwriter.writeConsole(" Updater will run 3 minute later\n");
-							Thread.sleep((long) 180000);
-							
-						}
-					} catch (InterruptedException e) {
-						date = new Date();
-						writeFileLog(pLog,dateFormat.format(date) +" Thread could not sleep. (Failed to call sleep method)");
-						logwriter.writeConsole(" Quit update thread");
-						Thread.currentThread().interrupt();
-					}
-				
+				try {
+					newyear = Calendar.getInstance().get(Calendar.YEAR);
+					updaterDB.update(lastyear,newyear,test);						
+				} catch (SQLException|IOException|SAXException|ParserConfigurationException|TransformerException|ClassNotFoundException e) {
+					Logwriter.writeConsole(" Cannot update modified data.\n");
+					date = new Date();
+					writeFileLog(pLog,dateFormat.format(date) +" Update failed. (Update DB failed)");
+					Thread.currentThread().interrupt();
 				}
+				
+				lastyear = newyear;
+				timeIndicator = Calendar.getInstance();
+				Date date2 = timeIndicator.getTime();
+				try {
+					timeIndicator.setTime(sDataform.parse(sDataform.format(date2)));
+				} catch (java.text.ParseException e) {
+					date = new Date();
+					writeFileLog(pLog,dateFormat.format(date) +" Thread could not sleep. (Failed to set time)");
+					Thread.currentThread().interrupt();
+				}
+				date2 = timeIndicator.getTime();
+				Date date3 = new Date();
+				
+				Logwriter.writeConsole(" Updater sleeps.\n");
+				try {
+					if (!test) {
+						Logwriter.writeConsole(" Updater will run at "+updateTime24+":00\n");
+						Thread.sleep(timeInterval-(date3.getTime()-date2.getTime())+updateTime24*anHour); // thread will awake at midnight(04:00)
+					} else {
+						Logwriter.writeConsole(" Updater will run 3 minute later\n");
+						Thread.sleep((long) 180000);
+						
+					}
+				} catch (InterruptedException e) {
+					date = new Date();
+					writeFileLog(pLog,dateFormat.format(date) +" Thread could not sleep. (Failed to call sleep method)");
+					Logwriter.writeConsole(" Quit update thread\n");
+					Thread.currentThread().interrupt();
+				}
+			
 			}
-		};
-		Thread thread = new Thread(runnable);
-		thread.start();	
+		}).start();	
 
 	}
 	
+	/**
+	 * @brief	write log message into file by logger
+	 * @param	fpath
+	 * 			type: String
+	 * 			file path of txt log file
+	 * @param	log
+	 * 			type: String
+	 * 			log message
+	 * @return	true if success. if not, false
+	 */
 	private static boolean writeFileLog (String fpath, String log){
 		try {
-			logwriter.writeFile(fpath,log);
+			Logwriter.writeFile(fpath,log);
 			return true;
 		} catch (Exception e) {
-			logwriter.writeConsole(logError);
+			Logwriter.writeConsole(logError);
 			return false;
 		}
 	}

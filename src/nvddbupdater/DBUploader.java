@@ -5,16 +5,20 @@
  * @brief	This file contains a class that have methods to work on DB
  * @date
  * 	- 2018. 11. 02	Joh Rang Hyun
+ *  - 2018.	12.	14	Joh Rang Hyun	StAX version
  */
 package nvddbupdater;
 
 import java.io.File;
 import java.sql.*;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Element;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.EndElement;
+import javax.xml.stream.events.XMLEvent;
 
 /**
  * @class	DBUploader
@@ -23,24 +27,33 @@ import org.w3c.dom.Element;
  */
 public class DBUploader {
 	static ZipTagXml ztx = new ZipTagXml();
-	Logwriter logwriter = new Logwriter();
+	//StAX version
 	String baseType = "_base";
 	String refsType = "_refs";
 	String vulnType = "_vuln";
 	String modifiedBase = "modified_base";
 	String modifiedRefs = "modified_refs";
 	String modifiedVuln = "modified_vuln";
+	String[] baseCharAtt = {"name", "published", "modified", "seq", "type", "severity",  "CVSS_vector", "`desc`"};
+	String[] baseIntAtt = {"CVSS_base_score", "CVSS_exploit_subscore", "CVSS_impact_subscore","CVSS_version"};
+	String[] refsAtt = {"name", "source", "url"};
+	String[] vulnAtt = {"name", "prodname", "vendor", "num", "edition"};
+	String createTable = "CREATE TABLE ";
+	
 	/**
-	 * @brief	This method make query that drop table of 'nvd' database and make a new table
+	 * @brief	Check xml file and write log
 	 * @param	fpath
 	 * 			type: String
-	 * 			fpath is file path you will upload on 'nvd' database
-	 * 			The file name should be '<year>_base.xml'
-	 * 			The table name will be created on 'nvd' database is <year>_base
+	 * 			File path of xml file
+	 * @param	typeTable
+	 * 			type: String
+	 * 			_base, _refs, _vuln
+	 * @return	True if the file exists
+	 * 			If not, false
 	 */
 	public boolean createInitLogMessage (String fpath, String typeTable) {
 		if(fpath.isEmpty()) {
-			logwriter.writeConsole(" File_base path is empty.");
+			Logwriter.writeConsole(" File_base path is empty.\n");
 			return false;
 		}
 		else {
@@ -49,16 +62,16 @@ public class DBUploader {
 			String parser1 = fpath.split("-")[1];
 			parser2 = parser1.split("_")[0];
 			if (!fpth.exists()) {
-				logwriter.writeConsole(" "+fpath + " does not exist.");
-				logwriter.writeConsole(" If there is " + parser2 + typeTable + " table already, use it.");
-				logwriter.writeConsole(" If not, " + parser2 + typeTable + " table is not created.");
+				Logwriter.writeConsole(" "+fpath + " does not exist.\n");
+				Logwriter.writeConsole(" If there is " + parser2 + typeTable + " table already, use it.\n");
+				Logwriter.writeConsole(" If not, " + parser2 + typeTable + " table is not created.\n");
 				
 				return false;
 			}
 			else if (!fpth.isFile()) {
-				logwriter.writeConsole(" "+fpath + " is not a file.");
-				logwriter.writeConsole(" If there is " + parser2 + typeTable + " table already, use it.");
-				logwriter.writeConsole(" If not, " + parser2 + typeTable + " table is not created.");
+				Logwriter.writeConsole(" "+fpath + " is not a file.\n");
+				Logwriter.writeConsole(" If there is " + parser2 + typeTable + " table already, use it.\n");
+				Logwriter.writeConsole(" If not, " + parser2 + typeTable + " table is not created.\n");
 				return false;
 			}
 			else {
@@ -66,22 +79,33 @@ public class DBUploader {
 			}
 		}
 	}
-		
-	public boolean createUpdateLogMessage (String fpath, String nTable) {
-		if(fpath.isEmpty()) {
-			logwriter.writeConsole(" "+nTable+" File path is empty.");
+	
+	/**
+	 * @brief	check the xml file and write log
+	 * @param	fpath
+	 * 			type: String
+	 * 			file path of xml file
+	 * @param	nTable
+	 * 			type: String
+	 * 			the name of table to update
+	 * @return	true if the file exists
+	 * 			if not, false
+	 */
+	public boolean createUpdateLogMessage(String fpath, String nTable) {
+		if (fpath.isEmpty()) {
+			Logwriter.writeConsole(" "+nTable+" File path is empty.\n");
 			return false;
 		}
 		else {
 			File inputFile = new File(fpath);
 			if (!inputFile.exists()) {
-				logwriter.writeConsole(" "+fpath + " does not exist.");
-				logwriter.writeConsole(" Update "+nTable+" failed.");
+				Logwriter.writeConsole(" "+fpath + " does not exist.\n");
+				Logwriter.writeConsole(" Update "+nTable+" failed.\n");
 				return false;
 			}
 			else if (!inputFile.isFile()) {
-				logwriter.writeConsole(" "+fpath + " is not a file.");
-				logwriter.writeConsole(" Update "+nTable+" failed.");
+				Logwriter.writeConsole(" "+fpath + " is not a file.\n");
+				Logwriter.writeConsole(" Update "+nTable+" failed.\n");
 				return false;
 			}
 			else {
@@ -91,7 +115,17 @@ public class DBUploader {
 		
 	}
 	
-	public void initNUploadBase(Connection conn, String fpath) throws Exception {
+	/**
+	 * @brief	drop base tables and upload base xml files
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	fpath
+	 * 			type: String
+	 * 			file path of base xml file
+	 * @throws	SQLException
+	 */
+	public void initNUploadBase(Connection conn, String fpath) throws SQLException {
 		
 		boolean canExecute = createInitLogMessage(fpath, baseType);
 		
@@ -106,10 +140,10 @@ public class DBUploader {
 				createBase(conn, nTable);
 				loadXmltoTable(conn, nTable);
 				setForeignKey(conn, 1);
-				logwriter.writeConsole(" DROP and CREATE base "+parser2);
+				Logwriter.writeConsole(" DROP and CREATE base "+parser2+"\n");
 			}
-			catch (Exception e) {
-				logwriter.writeConsole(" DROP and CREATE base failed "+parser2);
+			catch (SQLException e) {
+				Logwriter.writeConsole(" DROP and CREATE base failed "+parser2+"\n");
 				throw e;
 			}
 		}
@@ -117,14 +151,16 @@ public class DBUploader {
 	}
 	
 	/**
-	 * @brief	This method make query that drop table of 'nvd' database and make a new table
+	 * @brief	drop refs tables and upload refs xml files
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
 	 * @param	fpath
 	 * 			type: String
-	 * 			fpath is file path you will upload on 'nvd' database
-	 * 			The file name should be '<year>_refs.xml'
-	 * 			The table name will be created on 'nvd' database is <year>_refs
+	 * 			file path of refs xml file
+	 * @throws	SQLException
 	 */
-	public void initNUploadRefs(Connection conn, String fpath) throws Exception {
+	public void initNUploadRefs(Connection conn, String fpath) throws SQLException {
 		
 		boolean canExecute = createInitLogMessage(fpath, refsType);
 		
@@ -138,10 +174,10 @@ public class DBUploader {
 				dropTable(conn, nTable);	
 				createRefs(conn, nTable, baseTable);
 				loadXmltoTable(conn, nTable);
-				logwriter.writeConsole(" DROP and CREATE refs "+parser2);
+				Logwriter.writeConsole(" DROP and CREATE refs "+parser2+"\n");
 			}
-			catch (Exception e) {
-				logwriter.writeConsole(" DROP and CREATE refs failed "+parser2);
+			catch (SQLException e) {
+				Logwriter.writeConsole(" DROP and CREATE refs failed "+parser2+"\n");
 				throw e;
 			} 
 			
@@ -152,14 +188,16 @@ public class DBUploader {
 	
 
 	/**
-	 * @brief	This method make query that drop table of 'nvd' database and make a new table
+	 * @brief	drop vuln tables and upload vuln xml files
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
 	 * @param	fpath
 	 * 			type: String
-	 * 			fpath is file path you will upload on 'nvd' database
-	 * 			The file name should be '<year>_vuln.xml'
-	 * 			The table name will be created on 'nvd' database is <year>_vuln
+	 * 			file path of vuln xml file
+	 * @throws	SQLException
 	 */
-	public void initNUploadVuln(Connection conn, String fpath) throws Exception {
+	public void initNUploadVuln(Connection conn, String fpath) throws SQLException {
 		String typeTable = vulnType;
 		boolean canExecute = createInitLogMessage(fpath, typeTable);
 		
@@ -173,22 +211,224 @@ public class DBUploader {
 				dropTable(conn, nTable);	
 				createVuln(conn, nTable, baseTable);
 				loadXmltoTable(conn, nTable);
-				logwriter.writeConsole(" DROP and CREATE vuln "+parser2);
+				Logwriter.writeConsole(" DROP and CREATE vuln "+parser2+"\n");
 			}
-			catch (Exception e) {
-				logwriter.writeConsole(" DROP and CREATE vuln failed "+parser2);
+			catch (SQLException e) {
+				Logwriter.writeConsole(" DROP and CREATE vuln failed "+parser2+"\n");
 				throw e;
 			}  
 			
 		}
 		
-		 
+	}
+	
+	/**
+	 * @brief	initialize a Map with array
+	 * @param	cveMap
+	 * 			type: Map<String, String>
+	 * 			the Map to be initialized
+	 * @param	cveAtt
+	 * 			type: String[]
+	 * 			contains attributes of map
+	 */
+	public void initMap (Map<String, String> cveMap, String[] cveAtt) {
+		cveMap.clear();
+		for (int i = 0; i < cveAtt.length; i++) {
+			cveMap.put(cveAtt[i], "");
+		}
 		
 	}
 	
-
+	/**
+	 * @brief	read XMLEvent and map the values into cveMap
+	 * @param	event
+	 * 			type: XMLEvent
+	 * 			start of element, end of element, etc.
+	 * @param	cveMap
+	 * 			type: Map<String, String>
+	 * 			save the values of attributes of element
+	 */
+	@SuppressWarnings("unchecked")
+	public void mappingAtts (XMLEvent event, Map<String, String> cveMap) {
+            Iterator<Attribute> attributes = event.asStartElement().getAttributes();
+            while (attributes.hasNext()){
+	              Attribute attE = attributes.next();
+	              if (attE.getName().toString().equals("desc")) {
+	            	  cveMap.put("`desc`", attE.getValue());
+	              } else {
+	            	  cveMap.put(attE.getName().toString(), attE.getValue());
+	              }
+	              
+            }
+	}
+	
+	/**
+	 * @brief	update data with cveMap into already created table
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	parsedTableName
+	 * 			type: String
+	 * 			the name of table to be updated
+	 * @param	cveMap
+	 * 			type: Map<String, String>
+	 * 			attributes to be reference for update
+	 * @param	cveAtt
+	 * 			type: String[]
+	 * 			name of columns of table to be updated (DB String value)
+	 * @param	cveAtt2
+	 * 			type: String[]
+	 * 			name of columns of table to be updated (DB integer value)
+	 * @param	isBaseTable
+	 * 			type: boolean
+	 * 			true if the table should be updated is base table. if not, false
+	 * @param	needToDelete
+	 * 			type: boolean
+	 * 			true if original data should be deleted. if not, false
+	 * @return
+	 */
+	public boolean updateQuery (Connection conn, String parsedTableName, Map<String, String> cveMap, String[] cveAtt, String[] cveAtt2, boolean isBaseTable, boolean needToDelete) {
+		StringBuilder query1 = new StringBuilder();
+		StringBuilder query2 = new StringBuilder();
+		StringBuilder query3 = new StringBuilder();
+		query1.append("INSERT INTO "+parsedTableName+" ( ");
+		query2.append("VALUES ( ");
+		query3.append("ON DUPLICATE KEY UPDATE ");
+		for (int i = 0 ; i < cveAtt.length ; i++) {
+			if (i > 0) {
+				query1.append(", ");
+				query2.append(", ");
+				query3.append(", ");
+			}
+			query1.append(cveAtt[i]);
+			query2.append("\""+cveMap.get(cveAtt[i]).replace("\\", "\\"+"\\").replaceAll("'", "\\'").replaceAll("&","&amp;").replaceAll("\"","&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")+"\"");
+ 		   if (isBaseTable) {
+ 			   query3.append(cveAtt[i]+"=\""+cveMap.get(cveAtt[i]).replace("\\", "\\"+"\\").replaceAll("'", "\\'").replaceAll("&","&amp;").replaceAll("\"","&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")+"\"");
+ 		   } 
+ 	   }
+		if (isBaseTable) {
+			for (int i = 0 ; i < cveAtt2.length ; i++) {
+				query1.append(", ");
+				query2.append(", ");
+				query3.append(", ");
+				query1.append(cveAtt2[i]);
+				query2.append(cveMap.get(cveAtt2[i]));
+	 			query3.append(cveAtt2[i]+"="+cveMap.get(cveAtt2[i]));
+	 		   
+	 	   }
+		}
+ 	   query1.append(") ");
+ 	   query2.append(") ");
+ 	   query1.append(query2.toString());
+ 	   try {
+	 	   if (isBaseTable) {
+	 		   query1.append(query3.toString());
+	 	   } else {
+	 		   if (needToDelete) {
+	 			   deleteData(conn, parsedTableName, cveMap.get("name"));
+	 		   }
+	 	   }
+	 	  nvdQuery(conn,query1.toString(),null);
+	 	  
+	 	  return true;
+ 	   } catch (Exception e) {
+		  return false;
+	   }
+	}
+	
+	/**
+	 * @brief	check in which table cve should be input
+	 * @param	cveName
+	 * 			type: String
+	 * 			cve name
+	 * @param	tableType
+	 * 			type: String
+	 * 			_base, _refs, _vuln
+	 * @return	String parsedTableName
+	 */
+	public String parseTableName (String cveName, String tableType) {
+		String parsedTableName = "";
+		//System.out.println("cveName="+cveName);
+		String parser1 = cveName.split("-")[1];
+		int parsint = Integer.parseInt(parser1);
+		if (parsint < 2002) {
+			parser1 = "2002";
+		}
+		parsedTableName = parser1+tableType;
+		return parsedTableName;
+		
+	}
+	
+	/**
+	 * @brief	update table with xml file
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	tableType
+	 * 			type: String
+	 * 			_base, _refs, _vuln
+	 * @param	xmlFilePath
+	 * 			type: String
+	 * 			file path of xml file
+	 * @param	isBaseTable
+	 * 			type: boolean
+	 * 			true if the table is base table. if not, false
+	 * @param	cveAtt
+	 * 			type: String[]
+	 * 			name of columns of table to be updated (DB String value)
+	 * @param	cveAtt2
+	 * 			type: String[]
+	 * 			name of columns of table to be updated (DB integer value)
+	 * @return	true if update is success. if not, false
+	 */
+	public boolean updateTable(Connection conn, String tableType ,String xmlFilePath, boolean isBaseTable ,String[] cveAtt,String[] cveAtt2) {
+		XMLEventReader eventReader = new MakeDataStructure().getEventReader(xmlFilePath);
+		Map<String, String> cveMap = new HashMap<>();
+		String prevName = ""; 
+		int proc = 0;
+		int done = 5000;
+		initMap(cveMap, cveAtt);
+		//System.out.println("updateTable ");
+		try {
+			while(eventReader.hasNext()) {
+		        XMLEvent event = eventReader.nextEvent();
+		        if(event.getEventType() == XMLStreamConstants.START_ELEMENT) {
+		        	if (event.asStartElement().getName().getLocalPart().equalsIgnoreCase("entry")) {
+		        		   mappingAtts(event, cveMap);
+		        	   }
+		        } else if(event.getEventType() == XMLStreamConstants.END_ELEMENT) {
+		        	EndElement endElement = event.asEndElement();
+		              
+			           if(endElement.getName().getLocalPart().equalsIgnoreCase("entry")) {
+			        	   if(!cveMap.get("name").equals("null"))
+				        	   if (!updateQuery (conn, parseTableName(cveMap.get("name"),tableType), cveMap, cveAtt,cveAtt2, isBaseTable, !prevName.equals(cveMap.get("name")))) {
+				        		   return false;
+				        	   }
+			        	   prevName = cveMap.get("name");
+			        	   initMap(cveMap, cveAtt);
+			        	   proc = proc+1;
+			        	   if (proc >= done) {
+			        		   Logwriter.writeConsole(" update other tables with modified"+tableType+": "+proc+" rows\n");
+			        		   done = done + 5000;
+			        	   }
+			           }
+		        }
+		       
+			}
+			
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("XML Error"+e);
+			return false;
+		}
+		
+	}
 	/**
 	 * @brief	This method make query that update <year>_base tables of 'nvd' database and make a new table named modified_base
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
 	 * @param	fpath
 	 * 			type: String
 	 * 			fpath is file path you will upload on 'nvd' database
@@ -202,18 +442,16 @@ public class DBUploader {
 	 * @param	newyear
 	 * 			newyear is the year when this method is called
 	 * 			If IsNewYear is true, this method create new table referenced by newyear
-	 * @throws	Exception
+	 * @throws	SQLException
 	 */
-	public void uploadModifiedBase (Connection conn, String fpath, boolean isNewYear, int newyear) throws Exception {
+	public void uploadModifiedBase (Connection conn, String fpath, boolean isNewYear, int newyear) throws SQLException {
 		
-		logwriter.writeConsole(" ");
+		Logwriter.writeConsole(" \n");
 		boolean canExecute = createUpdateLogMessage(fpath, modifiedBase);
 		if (canExecute) {
 				
 			try {
-				// Load translated modified file.
 				
-				// make node list.
 				
 				if(isNewYear) {
 					String newTable = newyear + baseType;
@@ -222,147 +460,16 @@ public class DBUploader {
 				else {
 					///nothing to do
 				}
-				File inputFile = new File(fpath);
+				
 				setForeignKey(conn, 0);
 				dropTable(conn, modifiedBase);
 				createBase(conn, modifiedBase);
 				loadXmltoTable(conn, modifiedBase);
 				setForeignKey(conn, 1);
-				NodeList nList = makeNodeList(inputFile);
-				int procrate = 5;
-				for (int temp = 0; temp < nList.getLength(); temp++) {
-					// parse year of CVE
-					Element cveName = (Element) nList.item(temp);
-					String cveN = cveName.getAttribute("name");
-					String cveSeq = cveName.getAttribute("seq");
-					String cveType = cveName.getAttribute("type");
-					String cvePub = cveName.getAttribute("published");
-					String cveMod = cveName.getAttribute("modified");
-					String cveCV = cveName.getAttribute("CVSS_vector");
-					String cveEx = cveName.getAttribute("CVSS_exploit_subscore");
-					String cveImp = cveName.getAttribute("CVSS_impact_subscore");
-					String cveBase = cveName.getAttribute("CVSS_base_score");
-					String cveVer = cveName.getAttribute("CVSS_version");
-					String cveSev = cveName.getAttribute("severity");
-					String cveTemp = cveName.getAttribute("desc");
-					String cveTempT = cveTemp.replace("\\", "\\"+"\\");
-					String cveDesc = cveTempT.replace("'", "\\'");
-					String parser1 = cveN.split("-")[1];
-					StringBuilder query1 = new StringBuilder();
-					StringBuilder query2 = new StringBuilder();
-					StringBuilder query3 = new StringBuilder();
-					
-					int parsint = Integer.parseInt(parser1);
-					if (parsint < 2002) {
-						parser1 = "2002";
-					}
-					else {
-						//nothing to do
-					}
-					if (cveN.isEmpty()) {
-						logwriter.writeConsole(" There is no name of CVE (base_modified)\n" + fpath);
-					}
-					else if (cveSeq.isEmpty()) {
-						logwriter.writeConsole(" There is no seq of CVE (base_modified)\n" + fpath + ", " + cveN);
-					}
-					else if (cveType.isEmpty()) {
-						logwriter.writeConsole(" There is no type of CVE (base_modified)\n" + fpath + ", " + cveN);
-					}
-					else if (cvePub.isEmpty()) {
-						logwriter.writeConsole(" There is no published of CVE (base_modified)\n" + fpath + ", " + cveN);
-					}
-					else if (cveMod.isEmpty()) {
-						logwriter.writeConsole(" There is no modified of CVE (base_modified)\n" + fpath + ", " + cveN);
-					}
-					else if (cveDesc.isEmpty()) {
-						logwriter.writeConsole(" There is no `desc` of CVE (base_modified)\n" + fpath + ", " + cveN);
-					}
-					else {
-						query1.append("INSERT INTO "+parser1+"_base " +
-								"(name, seq, type, published, modified, " 
-								);
-						query2.append("VALUES ('"+cveN+"','"+cveSeq+"','"+cveType+"','"+cvePub+"','"+cveMod+"',");
-						query3.append("ON DUPLICATE KEY UPDATE modified= '"+cveMod+"', ");
-						
-							
-						
-						if (!cveCV.isEmpty()) {
-							query1.append("CVSS_vector, ");
-							query2.append("'"+cveCV+"', ");
-							query3.append("CVSS_vector ='"+cveCV+"', ");
-							
-						}
-						else {
-							//nothing to do
-						}
-						if (!cveEx.isEmpty()) {
-							query1.append("CVSS_exploit_subscore, ");
-							query2.append(""+cveEx+", ");
-							query3.append("CVSS_exploit_subscore ="+cveEx+", ");
-							
-						}
-						else {
-							//nothing to do
-						}
-						if (!cveImp.isEmpty()) {
-							query1.append("CVSS_impact_subscore, ");
-							query2.append(""+cveImp+", ");
-							query3.append("CVSS_impact_subscore ="+cveImp+", ");
-							
-						}
-						else {
-							//nothing to do
-						}
-						if (!cveBase.isEmpty()) {
-							query1.append("CVSS_base_score, ");
-							query2.append(""+cveBase+", ");
-							query3.append("CVSS_base_score ="+cveBase+", ");
-							
-						}
-						else {
-							//nothing to do
-						}
-						if (!cveVer.isEmpty()) {
-							query1.append("CVSS_version, ");
-							query2.append(""+cveVer+", ");
-							query3.append("CVSS_version ="+cveVer+", ");
-							
-						}
-						else {
-							//nothing to do
-						}
-						if (!cveSev.isEmpty()) {
-							query1.append("severity, ");
-							query2.append("'"+cveSev+"', ");
-							query3.append("severity ='"+cveSev+"', ");
-							
-						}
-						else {
-							//nothing to do
-						}
-						query1.append("`desc`) ");
-						query2.append("'"+cveDesc+"') ");
-						query3.append("`desc` ='"+cveDesc+"';");
-						
-						
-						
-						query2.append(query3.toString());
-						query1.append(query2.toString());
-						
-						
-						nvdQuery(conn,query1.toString(),null);
-						
-						
-					}
-					if(temp*100/nList.getLength() > procrate) {
-						logwriter.writeConsole(" upload modified base "+procrate+"%");
-						procrate = procrate + 5;
-					}
-				}
-				
-				logwriter.writeConsole(" upload modified base complete");
-			} catch (Exception e) {
-				logwriter.writeConsole(" upload modified base failed");
+				updateTable(conn, baseType, fpath, true ,baseCharAtt, baseIntAtt);
+				Logwriter.writeConsole(" upload modified base complete\n");
+			} catch (SQLException e) {
+				Logwriter.writeConsole(" upload modified base failed\n"+e);
 				throw e;
 			}  finally {
 				///nothing to do
@@ -378,6 +485,9 @@ public class DBUploader {
 
 	/**
 	 * @brief	This method make query that update <year>_refs tables of 'nvd' database and make a new table named modified_refs
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
 	 * @param	fpath
 	 * 			type: String
 	 * 			fpath is file path you will upload on 'nvd' database
@@ -391,21 +501,16 @@ public class DBUploader {
 	 * @param	newyear
 	 * 			newyear is the year when this method is called
 	 * 			If IsNewYear is true, this method create new table referenced by newyear
-	 * @throws	Exception
+	 * @throws	SQLException
 	 */
-	public void uploadModifiedRefs (Connection conn, String fpath, boolean isNewYear, int newyear) throws Exception {
+	public void uploadModifiedRefs (Connection conn, String fpath, boolean isNewYear, int newyear) throws SQLException {
 		
-		logwriter.writeConsole(" ");
+		Logwriter.writeConsole(" uploadModifiedRefs \n");
 		boolean canExecute = createUpdateLogMessage(fpath, modifiedRefs);
 		
 		if(canExecute) {
-				
 			try {
-				// Load translated modified file.
 				
-				// make node list.
-				File inputFile = new File(fpath);
-				NodeList nList = makeNodeList(inputFile);
 				if(isNewYear) {
 					createRefs(conn, newyear+refsType,newyear+baseType);
 				}
@@ -415,71 +520,12 @@ public class DBUploader {
 				dropTable(conn, modifiedRefs);
 				createRefs(conn, modifiedRefs, modifiedBase);
 				loadXmltoTable(conn, modifiedRefs);
-				String prevName = "";
-				int procrate = 5;
-				for (int temp = 0; temp < nList.getLength(); temp++) {
-					// parse year of CVE
-					Element cveEntry = (Element) nList.item(temp);
-					String cveName = cveEntry.getAttribute("name");
-					String cveSource = cveEntry.getAttribute("source");
-					String cveTemp = cveEntry.getAttribute("url");
-					String cveUrl = cveTemp.replace("'","\\'");
-					if (cveName.isEmpty()) {
-						logwriter.writeConsole(" There is no name of CVE (refs_modified)\n" + fpath);
-					}
-					else if (cveSource.isEmpty()) {
-						logwriter.writeConsole(" There is no source of CVE (refs_modified)\n" + fpath + ", " + cveName);
-					}
-					else if (cveUrl.isEmpty()) {
-						logwriter.writeConsole(" There is no url of CVE (refs_modified)\n" + fpath + ", " + cveName);
-					}
-					else {
-						String parser1 = cveName.split("-")[1];
-						int parsint = Integer.parseInt(parser1);
-						if (parsint < 2002) {
-							parser1 = "2002";
-						}
-						else {
-							// nothing to do
-						}
-						
-						if (!prevName.equals(cveName)) {
-							deleteData(conn, parser1+refsType, cveName);
-							prevName = cveName;
-						}
-						else {
-							// nothing to do
-						}
-						
-						String refsInsertQuery = "INSERT INTO " + parser1+refsType+
-								"(name, source, url) " +
-								"VALUES (?,?,?); ";
-						String[] input = {cveName, cveSource, cveUrl};
-						try {
-							nvdQuery(conn, refsInsertQuery, input);
-						} catch (Exception e) {
-							logwriter.writeConsole(" Cannot insert data into "+parser1+refsType);
-							throw e;
-						} finally {
-							///nothing to do
-							
-						}
-						
-						
-					}
-					if(temp*100/nList.getLength() > procrate) {
-						logwriter.writeConsole(" upload modified refs "+procrate+"%");
-						procrate = procrate + 5;
-					}
-					
-				}
-			
-				logwriter.writeConsole(" upload modified refs complete");
+				updateTable(conn, refsType, fpath, false ,refsAtt, null);
+				
+				Logwriter.writeConsole(" upload modified refs complete\n");
 			} catch (Exception e) {
-				logwriter.writeConsole(" upload modified refs failed");
+				Logwriter.writeConsole(" upload modified refs failed\n"+e);
 				throw e;
-			}  finally {
-				///nothing to do
 			}
 			
 			
@@ -490,6 +536,9 @@ public class DBUploader {
 
 	/**
 	 * @brief	This method make query that update <year>_vuln tables of 'nvd' database and make a new table named modified_vuln
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
 	 * @param	fpath
 	 * 			type: String
 	 * 			fpath is file path you will upload on 'nvd' database
@@ -503,11 +552,11 @@ public class DBUploader {
 	 * @param	newyear
 	 * 			newyear is the year when this method is called
 	 * 			If IsNewYear is true, this method create new table referenced by newyear
-	 * @throws	Exception
+	 * @throws	SQLException
 	 */
-	public void uploadModifiedVuln (Connection conn, String fpath, boolean isNewYear, int newyear) throws Exception {
+	public void uploadModifiedVuln (Connection conn, String fpath, boolean isNewYear, int newyear) throws SQLException {
 		
-		logwriter.writeConsole(" ");
+		Logwriter.writeConsole(" \n");
 		boolean canExecute = createUpdateLogMessage(fpath, modifiedVuln);
 		if(canExecute) {
 		
@@ -515,9 +564,7 @@ public class DBUploader {
 			try {
 				// Load translated modified file.
 				
-				// make node list.
-				File inputFile = new File(fpath);
-				NodeList nList = makeNodeList(inputFile);
+				
 				if(isNewYear) {
 					createVuln(conn, newyear+vulnType, newyear+baseType);
 				}
@@ -527,93 +574,26 @@ public class DBUploader {
 				dropTable(conn, modifiedVuln);
 				createVuln(conn, modifiedVuln, modifiedBase);
 				loadXmltoTable(conn, modifiedVuln);
-				String prevName = "";
-				int procrate = 5;
-				for (int temp = 0; temp < nList.getLength(); temp++) {
-					// parse year of CVE
-					Element cveEntry = (Element) nList.item(temp);
-					String cveName = cveEntry.getAttribute("name");
-					String cveTemp = cveEntry.getAttribute("prodname");
-					String cveProd = cveTemp.replace("'", "\\'");
-					String cveVen = cveEntry.getAttribute("vendor");
-					String cveNum = cveEntry.getAttribute("num");
-					String cveEdi = cveEntry.getAttribute("edition");
-					if (cveName.isEmpty()) {
-						logwriter.writeConsole(" There is no name of CVE (vuln_modified)\n" + fpath);
-					}
-					else if (cveProd.isEmpty()) {
-						logwriter.writeConsole(" There is no prodname of CVE (vuln_modified)\n" + fpath + ", " + cveName);
-					}
-					else if (cveVen.isEmpty()) {
-						logwriter.writeConsole(" There is no vendor of CVE (vuln_modified)\n" + fpath + ", " + cveName);
-					}
-					else {
-						String parser1 = cveName.split("-")[1];
-						StringBuilder query = new StringBuilder();
-						StringBuilder query2 = new StringBuilder();
-						
-						int parsint = Integer.parseInt(parser1);
-						if (parsint < 2002) {
-							parser1 = "2002";
-						}
-						else {
-							// nothing to do
-						}
-						if (!prevName.equals(cveName)) {
-							deleteData(conn, parser1+vulnType, cveName);
-							prevName = cveName;
-						}
-						else {
-							// nothing to do
-						}
-						query.append("INSERT INTO "+parser1+"_vuln " +
-								"(name, prodname, vendor");
-						query2.append("VALUES ('"+cveName+"','"+cveProd+"','"+cveVen+"'");
-						
-						if (!cveNum.isEmpty()) {
-							query.append(", num");
-							query2.append(", '"+cveNum+"'");
-							
-						}
-						if (!cveEdi.isEmpty()) {
-							query.append(", edition");
-							query2.append(", '"+cveEdi+"'");
-							
-						}
-						else {
-							//nothing to do
-						}
-						query.append(") ");
-						query2.append(");");
-						
-						query.append(query2.toString());
-						
-						nvdQuery(conn,query.toString(),null);
-						
-					}
-					if(temp*100/nList.getLength() > procrate) {
-						logwriter.writeConsole(" upload modified vuln "+procrate+"%");
-						procrate = procrate + 5;
-					}
-				}
+				updateTable(conn, vulnType, fpath, false ,vulnAtt, null);
 				
-				
-				
-				logwriter.writeConsole(" upload modified vuln complete");
-			} catch (Exception e) {
-				logwriter.writeConsole(" upload modified vuln failed");
+				Logwriter.writeConsole(" upload modified vuln complete\n");
+			} catch (SQLException e) {
+				Logwriter.writeConsole(" upload modified vuln failed\n");
 				throw e;
-			}  finally {
-				///nothing to do
-			}
+			} 
 			
 		}
-		 
-	/**
-	 * @brief	make testing table on nvd database
-	 */
+		
 	}
-	public void setTestingTable (Connection conn) throws Exception{
+	
+	/**
+	 * @brief	create tables for test
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @throws	SQLException
+	 */
+	public void setTestingTable (Connection conn) throws SQLException{
 		
 		try {
 			String testBase = "2999_base";
@@ -658,17 +638,26 @@ public class DBUploader {
 			nvdQuery(conn, mVulnInsertQuery2, null);
 			
 		}
-		catch (Exception e) {
+		catch (SQLException e) {
 			
-			logwriter.writeConsole(" DROP and CREATE testing base table failed ");
+			Logwriter.writeConsole(" DROP and CREATE testing base table failed\n");
 			throw e;
 		} finally {
 			///nothing to do
 		}
 	}
 	
-	public void createBase (Connection conn, String nTable) throws Exception{
-		String createQuery = "CREATE TABLE "+nTable+
+	/**
+	 * @brief	create query that create base table
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	nTable
+	 * 			the name of base table
+	 * @throws	SQLException
+	 */
+	public void createBase (Connection conn, String nTable) throws SQLException{
+		String createQuery = createTable+nTable+
 				"(\n name char(20) not null unique,\n seq text,\n" +
 			    "type text,\n" +
 			    "published date not null,\n" +
@@ -683,11 +672,24 @@ public class DBUploader {
 			    
 			    ") ";
 		
-		nvdQuery(conn, createQuery, null);
+		//nvdQuery(conn, createQuery, null);
 	}
 	
-	public void createRefs(Connection conn, String nTable, String baseTable) throws Exception {
-		String createQuery = "CREATE TABLE "+nTable
+	/**
+	 * @brief	create query that create refs table
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	nTable
+	 * 			type: String
+	 * 			the name of refs table
+	 * @param	baseTable
+	 * 			type: String
+	 * 			the name of base table that is relational to refs table
+	 * @throws	SQLException
+	 */
+	public void createRefs(Connection conn, String nTable, String baseTable) throws SQLException {
+		String createQuery = createTable+nTable
 				+ "(\n name char(20) not null,\n source text, \n"
 				+ "url text, \n"
 				
@@ -696,70 +698,127 @@ public class DBUploader {
 				+ "(name)\n"
 				+ "	on delete cascade)";
 		
-		nvdQuery(conn, createQuery, null);
+		//nvdQuery(conn, createQuery, null);
 	}
 	
-	public void createVuln (Connection conn, String nTable, String baseTable) throws Exception{
-		String createQuery = "CREATE TABLE "+nTable+"(\n name char(20) not null,\n prodname text, \n"
+	/**
+	 * @brief	create query that create vuln table
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	nTable
+	 * 			type: String
+	 * 			the name of vuln table
+	 * @param	baseTable
+	 * 			type: String
+	 * 			the name of base table that is relational to vuln table
+	 * @throws	SQLException
+	 */
+	public void createVuln (Connection conn, String nTable, String baseTable) throws SQLException{
+		String createQuery = createTable+nTable+"(\n name char(20) not null,\n prodname text, \n"
 				+ "vendor text, \n" + "num text, \n" + "edition text, \n" 
 				+ "foreign key(name) references " + baseTable+"(name)\n" + "	on delete cascade)";
 		
-		nvdQuery(conn, createQuery, null);
+		//nvdQuery(conn, createQuery, null);
 	}
 	
-	public void loadXmltoTable (Connection conn, String nTable) throws Exception{
+	/**
+	 * @brief	load xml file to particular table of DB
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	nTable
+	 * 			type: String
+	 * 			the name of table
+	 * @throws	SQLException
+	 */
+	public void loadXmltoTable (Connection conn, String nTable) throws SQLException{
 		String loadQuery = "LOAD XML LOCAL INFILE './"+ZipTagXml.translated+"/nvdcve-"+nTable+".xml'\n" +
 				"INTO TABLE "+nTable+"\n" +
 				"ROWS IDENTIFIED BY '<entry>';";
 		nvdQuery(conn, loadQuery, null);
-		
 	} 
 	
-	public void dropTable (Connection conn, String nTable) throws Exception {
-		String dropQuery = "drop table if exists "+nTable;
+	/**
+	 * @brief	drop a table of nvd database
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	nTable
+	 * 			type: String
+	 * 			the name of table should be dropped
+	 * @throws	SQLException
+	 */
+	public void dropTable (Connection conn, String nTable) throws SQLException {
+		String dropQuery = "delete from "+nTable;
 		nvdQuery(conn, dropQuery, null);
 	}
 	
-	public void deleteData(Connection conn, String nTable, String nData) throws Exception{
+	/**
+	 * @brief	delete data that has nData as its cve name from a table 
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	nTable
+	 * 			type: String
+	 * 			the name of table
+	 * @param	nData
+	 * 			type: String
+	 * 			the name of cve should be deleted
+	 * @throws	SQLException
+	 */
+	public void deleteData(Connection conn, String nTable, String nData) throws SQLException{
 		String deleteQuery = "DELETE FROM "+nTable+" WHERE name= ?;";
 		String[] input = {nData};
 		nvdQuery(conn, deleteQuery, input);
 	}
 	
-	public Connection connectToDB() throws Exception{
+	/**
+	 * @brief	connect to DB server and return that connection
+	 * @return	Connection
+	 */
+	public Connection connectToDB() {
 		
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			return DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/nvd?serverTimezone=UTC", ZipTagXml.dbId, ZipTagXml.dbPw);
-		} catch (Exception e) {
-			logwriter.writeConsole(" connectToDB failed");
+			return DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/thub_prd_db?serverTimezone=UTC&allowLoadLocalInfile=true", ZipTagXml.dbId, ZipTagXml.dbPw);
+		} catch (ClassNotFoundException|SQLException e) {
+			Logwriter.writeConsole(" connectToDB failed\n");
+			e.printStackTrace();
 			return null;
 		} 
 	}
 	
-	
-	
-	public NodeList makeNodeList(File inputFile) throws Exception {
-		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-		try {
-			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document doc = dBuilder.parse(inputFile);
-			doc.getDocumentElement().normalize();
-			return doc.getElementsByTagName("entry");
-		} catch (Exception e) {
-			logwriter.writeConsole(" makeNodeList failed");
-			throw e;
-		}
-
-	}
-	
-	public void setForeignKey(Connection conn, int key) throws Exception{
+	/**
+	 * @brief	set the foreign key option of DB by 'key'
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	key
+	 * 			type: int
+	 * 			option value of foreign key check option
+	 * @throws	SQLException
+	 */
+	public void setForeignKey(Connection conn, int key) throws SQLException{
 		String setKeyQuery = "set foreign_key_checks = "+key;
 		nvdQuery(conn, setKeyQuery, null);
 
 	}
 	
-	public void nvdQuery (Connection conn, String query, String[] input) throws Exception {
+	/**
+	 * @brief	create query
+	 * @param	conn
+	 * 			type: Connection
+	 * 			connection to DB server
+	 * @param	query
+	 * 			type: String
+	 * 			query string
+	 * @param	input
+	 * 			type: String[]
+	 * 			values of query string
+	 * @throws	SQLException
+	 */
+	public void nvdQuery (Connection conn, String query, String[] input) throws SQLException {
 		
 		try (PreparedStatement queryCreate = conn.prepareStatement(query)){
 			
@@ -774,11 +833,30 @@ public class DBUploader {
 			}
 			
 			queryCreate.executeUpdate();
-		} catch (Exception e) {
-			logwriter.writeConsole(" Query Error!");
+			
+		} catch (SQLException e) {
+			
+			Logwriter.writeConsole(" Query Error!\n"+query);
+			e.printStackTrace();
 			throw e;
-		} finally {
-			///nothing to do
+		} 
+	}
+	
+	/**
+	 * @brief	Delete temporary content of wordpress database
+	 */
+	public void deleteTempPost() {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+		} catch (ClassNotFoundException e1) {
+			Logwriter.writeConsole(" Cannot find mysql driver\n");
+			return;
 		}
+		try (Connection conn = DriverManager.getConnection("jdbc:mysql://"+ZipTagXml.host+":"+ZipTagXml.port+"/thub_prd_db?serverTimezone=UTC&allowLoadLocalInfile=true", ZipTagXml.dbId, ZipTagXml.dbPw)){
+			String deleteString = "DELETE FROM wp_temp_content WHERE date < now() - interval 1 day";
+			nvdQuery(conn, deleteString, null);
+		} catch (Exception e) {
+			Logwriter.writeConsole(" Cannot delete wp_temp_content\n");
+		} 
 	}
 }
